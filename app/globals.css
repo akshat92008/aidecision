@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #030408;
+  --color-glass-surface: rgba(255, 255, 255, 0.04);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --color-accent-primary: #6366f1;
+  --color-accent-secondary: #a855f7;
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-success: #22c55e;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  min-height: 100vh;
+  margin: 0;
+  /* Frosted Glass blurry background blobs using radial-gradient to mimic the absolute div blurs */
+  background-image: 
+    radial-gradient(40vw circle at right top, rgba(99, 102, 241, 0.15) 0%, transparent 100%),
+    radial-gradient(40vw circle at left bottom, rgba(168, 85, 247, 0.15) 0%, transparent 100%);
+  background-attachment: fixed;
+}
