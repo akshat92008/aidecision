@@ -18,7 +18,7 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     
-    const { error } = await supabase.auth.signInWithPasswordless({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
