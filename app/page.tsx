@@ -97,17 +97,44 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q, constraints: c }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "System Failure");
 
-      setReport(data);
-      setThoughts(prev => data.agent_thoughts ? [...prev, ...data.agent_thoughts] : prev);
-      setPhase('REPORT');
-      fetchDecisions(); // Refresh portfolio in background
+      if (!res.ok) throw new Error("Connection Failure");
+      if (!res.body) throw new Error("Empty Strategic Signal");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const data = JSON.parse(line);
+            if (data.type === 'thought') {
+              setThoughts(prev => [...prev, data.payload]);
+              // Auto-scroll logic if needed
+            } else if (data.type === 'report') {
+              setReport(data.payload);
+              setPhase('REPORT');
+              fetchDecisions();
+            } else if (data.type === 'error') {
+              throw new Error(data.payload);
+            }
+          } catch (e) {
+            console.error("Stream parse error:", e);
+          }
+        }
+      }
     } catch (err: any) {
       setError(err.message || "Protocol Error");
       setIsProcessing(false);
-      // Removed setPhase('INTAKE') to allow error visibility
     } finally {
       setIsProcessing(false);
     }

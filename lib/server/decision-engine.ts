@@ -18,17 +18,22 @@ import {
 export class DecisionEngine {
   private thoughts: { agent: string; thought: string; timestamp: string }[] = [];
 
-  private log(agent: string, thought: string) {
+  private log(agent: string, thought: string, onThought?: (agent: string, thought: string) => void) {
     this.thoughts.push({
       agent,
       thought,
       timestamp: new Date().toISOString()
     });
     console.log(`[Nexus Engine] ${agent}: ${thought}`);
+    if (onThought) onThought(agent, thought);
   }
 
-  async runStrategicAudit(query: string, constraints: Constraints): Promise<FinalReport> {
-    this.log('System', 'Initializing Nexus Strategic Audit Pipeline...');
+  async runStrategicAudit(
+    query: string, 
+    constraints: Constraints,
+    onThought?: (agent: string, thought: string) => void
+  ): Promise<FinalReport> {
+    this.log('System', 'Initializing Nexus Strategic Audit Pipeline...', onThought);
 
     // 1. MARKET ANALYSIS (MCA / Startup India / Bharat Patterns)
     const analystSchema = {
@@ -58,7 +63,7 @@ export class DecisionEngine {
 
     const analystPrompt = `${MARKET_ANALYST_PROMPT}\n\nProblem: "${query}"\nFounder Context: ${JSON.stringify(constraints)}`;
     const { data: analystData, thought: t1 } = await callAgent('MarketAnalyst', analystPrompt, 'flash', analystSchema);
-    this.log('MarketAnalyst', t1);
+    this.log('MarketAnalyst', t1, onThought);
 
     // 2. REGULATORY AUDIT (DPDP / GST / Labor)
     const riskSchema = {
@@ -85,7 +90,7 @@ export class DecisionEngine {
 
     const riskPrompt = `${RISK_AUDITOR_PROMPT}\n\nEntity Context: ${analystData.summary}`;
     const { data: riskData, thought: t2 } = await callAgent('RiskAuditor', riskPrompt, 'flash', riskSchema);
-    this.log('RiskAuditor', t2);
+    this.log('RiskAuditor', t2, onThought);
 
     // 3. SYSTEMS ARCHITECTURE (Tech Stack / Founder Fit)
     const systemsSchema = {
@@ -101,7 +106,7 @@ export class DecisionEngine {
 
     const systemsPrompt = `${SYSTEMS_THINKER_PROMPT}\n\nProject Context: ${analystData.summary}\nConstraints: ${JSON.stringify(constraints)}`;
     const { data: systemsData, thought: t3 } = await callAgent('SystemsThinker', systemsPrompt, 'flash', systemsSchema);
-    this.log('SystemsThinker', t3);
+    this.log('SystemsThinker', t3, onThought);
 
     // 4. STRATEGIC SYNTHESIS (Final Verdict)
     const synthSchema = {
@@ -129,7 +134,7 @@ export class DecisionEngine {
 
     const synthPrompt = `${SYNTESIZER_PROMPT}\n\nInputs: ${JSON.stringify({ analystData, riskData, systemsData })}`;
     const { data: synthData, thought: t4 } = await callAgent('Synthesizer', synthPrompt, 'pro', synthSchema);
-    this.log('Synthesizer', t4);
+    this.log('Synthesizer', t4, onThought);
 
     // FORMULA EXECUTION
     const demandWeight = 30;
@@ -170,7 +175,11 @@ export class DecisionEngine {
   }
 }
 
-export async function generateDecisionReport(refinedQuery: string, industryKillers: IndustryKiller[] = []): Promise<FinalReport> {
+export async function generateDecisionReport(
+  refinedQuery: string, 
+  industryKillers: IndustryKiller[] = [],
+  onThought?: (agent: string, thought: string) => void
+): Promise<FinalReport> {
   // Use the new Phase 1 Nexus Engine for all audits
   const constraintsData: Constraints = {
     budget_inr: "Not Specified",
@@ -179,5 +188,5 @@ export async function generateDecisionReport(refinedQuery: string, industryKille
     tech_stack: ["General"],
     time_to_mvp: "3 months"
   };
-  return nexusEngine.runStrategicAudit(refinedQuery, constraintsData);
+  return nexusEngine.runStrategicAudit(refinedQuery, constraintsData, onThought);
 }
