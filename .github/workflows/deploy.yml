@@ -37,7 +37,7 @@ jobs:
             --allow-unauthenticated \
             --min-instances 1 \
             --cpu-boost \
-            --set-build-vars="NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }},NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            --set-build-env-vars="NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }},NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
             --set-env-vars="RUNWAY_GUARDIAN_URL=https://nexus-runway-guardian-967036044210.us-central1.run.app" \
             --set-env-vars="GCP_PROJECT_ID=ai-decision-machine" \
             --set-env-vars="GCP_LOCATION=us-central1" \
