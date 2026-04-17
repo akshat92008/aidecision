@@ -9,6 +9,8 @@ env:
   PROJECT_ID: ai-decision-machine
   REGION: us-central1
   SERVICE_NAME: ai-decision-engine
+  NEXT_PUBLIC_SUPABASE_URL: https://ecvstrjfrjypiyiccwmi.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjdnN0cmpmcmp5cGl5aWNjd21pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MDQyMjMsImV4cCI6MjA5MTk4MDIyM30.HYvcFPEyW7mNsTtJFg_ISmPIcaqrlW5sURpgTYR_PJc
 
 jobs:
   deploy:
@@ -35,6 +37,7 @@ jobs:
             --allow-unauthenticated \
             --min-instances 1 \
             --cpu-boost \
+            --set-build-vars="NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }},NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
             --set-env-vars="RUNWAY_GUARDIAN_URL=https://nexus-runway-guardian-967036044210.us-central1.run.app" \
             --set-env-vars="GCP_PROJECT_ID=ai-decision-machine" \
             --set-env-vars="GCP_LOCATION=us-central1" \

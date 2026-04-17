@@ -1,36 +1,41 @@
-# High-Reliability "Force-Build" Dockerfile for Next.js 15
-FROM node:20
+# Stage 1: Base image
+FROM node:20-slim AS base
+ENV NEXT_TELEMETRY_DISABLED 1
 
+# Stage 2: Dependencies
+FROM base AS deps
 WORKDIR /app
-
-# Ensure we have the correct build environment
-RUN apt-get update && apt-get install -y \
-    libc6 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy package manifests
 COPY package.json package-lock.json* ./
+RUN npm ci
 
-# Install dependencies - using simple install for reliability
-RUN npm install
-
-# Copy the rest of the application
+# Stage 3: Builder
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set environment variables for build
-ENV NEXT_TELEMETRY_DISABLED 1
+# Pass build-time environment variables
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NODE_ENV production
 
-# Ensure the public directory exists (prevents build-time crashes)
-RUN mkdir -p public
-
-# Execute the build
 RUN npm run build
 
-# Expose the Cloud Run port
-EXPOSE 8080
+# Stage 4: Runner
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
 ENV PORT 8080
 ENV HOSTNAME "0.0.0.0"
 
-# Standard start command for the "Fat" container
-CMD ["npm", "start"]
+# Copy standalone build and assets
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+EXPOSE 8080
+
+CMD ["node", "server.js"]
