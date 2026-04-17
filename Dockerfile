@@ -21,6 +21,7 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NODE_ENV production
 
+RUN mkdir -p public
 RUN npm run build
 
 # Stage 4: Runner (Slim image for minimal production size)
