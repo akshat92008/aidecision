@@ -92,14 +92,10 @@ export default function Home() {
     setThoughts([{ agent: 'NexusCore', thought: 'Initializing Guardrails & Signal Verification...', timestamp: new Date().toISOString() }]);
 
     try {
-      // PHASE 4: PII Scrubbing
-      const { guardrails } = await import('@/lib/server/guardrails');
-      const safeQuery = guardrails ? guardrails.scrub(q) : q;
-
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: safeQuery, constraints: c }),
+        body: JSON.stringify({ query: q, constraints: c }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "System Failure");
@@ -110,7 +106,8 @@ export default function Home() {
       fetchDecisions(); // Refresh portfolio in background
     } catch (err: any) {
       setError(err.message || "Protocol Error");
-      setPhase('INTAKE');
+      setIsProcessing(false);
+      // Removed setPhase('INTAKE') to allow error visibility
     } finally {
       setIsProcessing(false);
     }

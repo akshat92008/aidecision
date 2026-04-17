@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateDecisionReport } from "@/lib/server/ai-provider";
+import { generateDecisionReport } from "@/lib/server/decision-engine";
 import { createClient } from "@/utils/supabase/server";
 import { z } from "zod";
 
@@ -24,8 +24,12 @@ export async function POST(req: Request) {
 
     const { query, constraints, industryKillers } = validation.data;
 
+    // PHASE 4: PII Scrubbing (Server-Side)
+    const { guardrails } = await import("@/lib/server/guardrails");
+    const safeQuery = guardrails.scrub(query);
+
     // Generate the report
-    const finalReport = await generateDecisionReport(query, industryKillers);
+    const finalReport = await generateDecisionReport(safeQuery, industryKillers);
 
     // PHASE 2: PERISTENCE
     const supabase = await createClient();

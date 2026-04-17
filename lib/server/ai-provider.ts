@@ -140,16 +140,3 @@ export async function getRefinedProblem(query: string, answers: Record<string, s
   return data;
 }
 
-import { nexusEngine } from './decision-engine';
-
-export async function generateDecisionReport(refinedQuery: string, industryKillers: IndustryKiller[] = []): Promise<FinalReport> {
-  // Use the new Phase 1 Nexus Engine for all audits
-  const constraintsData: Constraints = {
-    budget_inr: "Not Specified",
-    location_tier: "Tier 1",
-    founder_background: "Direct Audit Mode",
-    tech_stack: ["General"],
-    time_to_mvp: "3 months"
-  };
-  return nexusEngine.runStrategicAudit(refinedQuery, constraintsData);
-}
