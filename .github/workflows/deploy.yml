@@ -9,8 +9,8 @@ env:
   PROJECT_ID: ai-decision-machine
   REGION: us-central1
   SERVICE_NAME: ai-decision-engine
-  NEXT_PUBLIC_SUPABASE_URL: https://ecvstrjfrjypiyiccwmi.supabase.co
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjdnN0cmpmcmp5cGl5aWNjd21pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MDQyMjMsImV4cCI6MjA5MTk4MDIyM30.HYvcFPEyW7mNsTtJFg_ISmPIcaqrlW5sURpgTYR_PJc
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
 jobs:
   deploy:
@@ -41,7 +41,7 @@ jobs:
             --set-env-vars="RUNWAY_GUARDIAN_URL=https://nexus-runway-guardian-967036044210.us-central1.run.app" \
             --set-env-vars="GCP_PROJECT_ID=ai-decision-machine" \
             --set-env-vars="GCP_LOCATION=us-central1" \
-            --set-env-vars="GROQ_API_KEY=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" \
-            --set-env-vars="NEXT_PUBLIC_SUPABASE_URL=https://ecvstrjfrjypiyiccwmi.supabase.co" \
-            --set-env-vars="NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjdnN0cmpmcmp5cGl5aWNjd21pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MDQyMjMsImV4cCI6MjA5MTk4MDIyM30.HYvcFPEyW7mNsTtJFg_ISmPIcaqrlW5sURpgTYR_PJc" \
-            --set-env-vars="SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjdnN0cmpmcmp5cGl5aWNjd21pIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjQwNDIyMywiZXhwIjoyMDkxOTgwMjIzfQ.bb1pXXZ0-WetB7ApCqNXyxpLoSUo3QXoOhO7eJ3JU30"
+            --set-env-vars="GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" \
+            --set-env-vars="NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" \
+            --set-env-vars="NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            --set-env-vars="SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"

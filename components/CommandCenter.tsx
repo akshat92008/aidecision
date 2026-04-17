@@ -1,0 +1,244 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  Activity, Target, TrendingUp, History,
+  Zap, Database, ShieldAlert
+} from "lucide-react";
+import { RunwayData, ExecutionDrift, GrowthExperiment, UnicornIntel, AuditScore } from "@/lib/shared/types";
+
+interface CommandCenterProps {
+  onLogDecision: () => void;
+  onOpenSimulation: () => void;
+}
+
+export const CommandCenter = ({ onLogDecision, onOpenSimulation }: CommandCenterProps) => {
+  const [loading, setLoading] = useState(true);
+  const [runway, setRunway] = useState<RunwayData | null>(null);
+  const [execution, setExecution] = useState<ExecutionDrift | null>(null);
+  const [growth, setGrowth] = useState<{ experiments: GrowthExperiment[] } | null>(null);
+  const [unicorn, setUnicorn] = useState<UnicornIntel | null>(null);
+  const [audit, setAudit] = useState<AuditScore | null>(null);
+
+  useEffect(() => {
+    const bootSequence = async () => {
+      try {
+        // Standardized MVP payload representing the founder's current state
+        const baseFinancials = {
+          current_cash: 4500000, 
+          monthly_revenue: 600000,
+          monthly_fixed_costs: 300000, 
+          monthly_variable_costs: 150000,
+          team_size: 5, 
+          avg_salary_per_employee: 100000, 
+          growth_rate: 5, 
+          planned_changes: []
+        };
+
+        const baseTasks = {
+          tasks: [{ title: "Q3 Feature Launch", due_date: "2024-01-01", status: "pending" }],
+          kpis: { "CAC": { target: 1000, actual: 1400 } }
+        };
+
+        const baseMetrics = { metrics: { cac: 1400, ltv: 2500, monthly_burn: 350000 } };
+        const baseIntel = { industry: "SaaS" };
+        const baseAudit = { decisions: [{ actual_outcome: "success" }, { actual_outcome: "failed" }, { actual_outcome: "failed" }] };
+
+        // Fetch all 5 modules simultaneously through the Next.js API proxy
+        const [simRes, execRes, growthRes, uniRes, auditRes] = await Promise.allSettled([
+          fetch("/api/simulate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(baseFinancials) }),
+          fetch("/api/execution/drift-analysis", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(baseTasks) }),
+          fetch("/api/growth/suggest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(baseMetrics) }),
+          fetch("/api/unicorn/market-scan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(baseIntel) }),
+          fetch("/api/audit/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(baseAudit) })
+        ]);
+
+        // Safely parse responses
+        if (simRes.status === 'fulfilled' && simRes.value.ok) setRunway(await simRes.value.json());
+        if (execRes.status === 'fulfilled' && execRes.value.ok) setExecution(await execRes.value.json());
+        if (growthRes.status === 'fulfilled' && growthRes.value.ok) setGrowth(await growthRes.value.json());
+        if (uniRes.status === 'fulfilled' && uniRes.value.ok) setUnicorn(await uniRes.value.json());
+        if (auditRes.status === 'fulfilled' && auditRes.value.ok) setAudit(await auditRes.value.json());
+
+      } catch (e) {
+        console.error("Nexus Boot Sequence Failed:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    bootSequence();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center space-y-4">
+        <Database className="w-8 h-8 text-accent animate-pulse" />
+        <div className="terminal-text text-[10px] text-accent uppercase tracking-widest">Synchronizing 5-Core Grid...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 max-w-[1600px] mx-auto space-y-8 pb-20">
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="terminal-text text-[10px] text-accent uppercase tracking-widest mb-1 flex items-center gap-2">
+            <div className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-[0_0_8px_var(--color-accent)]" />
+            System Overview Active
+          </h2>
+          <h1 className="text-3xl font-black uppercase tracking-tighter text-white">Command Center</h1>
+        </div>
+        <div className="flex gap-4">
+          <button onClick={onOpenSimulation} className="px-6 py-2 border border-white/10 bg-white/5 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all rounded text-zinc-300">
+            Open Lab
+          </button>
+          <button onClick={onLogDecision} className="px-6 py-2 bg-accent text-black text-xs font-black uppercase tracking-widest hover:bg-white transition-all rounded shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+            + Log Decision
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-6">
+        {/* MODULE 1: RUNWAY GUARDIAN */}
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="col-span-12 lg:col-span-8 war-room-panel p-8 rounded-2xl flex flex-col justify-between border-accent/20 group hover:border-accent/40 transition-all relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
+            <Zap className="w-48 h-48 text-accent" />
+          </div>
+          <div className="flex items-center justify-between mb-8 relative z-10">
+            <div className="flex items-center gap-2 text-zinc-400 text-[11px] uppercase font-black tracking-widest">
+              <Activity className="w-4 h-4 text-accent" /> Runway Guardian
+            </div>
+            <div className="text-[10px] text-emerald-500 uppercase font-black tracking-widest border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 rounded">
+              Status: Sustainable
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-8 relative z-10">
+            <div className="space-y-2">
+              <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Residue Runway</div>
+              <div className="text-6xl font-black text-white">{runway?.current?.runway_months || runway?.currentMetrics?.runway_months || "∞"} <span className="text-xl text-zinc-600">Mo</span></div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Survival Prob</div>
+              <div className="text-6xl font-black text-white">{(((runway?.current?.survival_probability || runway?.currentMetrics?.survival_probability) || 0) * 100).toFixed(0)}<span className="text-xl text-zinc-600">%</span></div>
+            </div>
+            <div className="space-y-4">
+              <div className="p-3 bg-black/40 border border-white/5 rounded-lg">
+                <div className="text-[9px] text-zinc-500 font-bold uppercase mb-1">Burn Rate</div>
+                <div className="text-lg font-black text-white">₹{(runway?.current?.burn_rate || runway?.currentMetrics?.burn_rate || 0).toLocaleString()}</div>
+              </div>
+              <div className="p-3 bg-black/40 border border-white/5 rounded-lg">
+                <div className="text-[9px] text-zinc-500 font-bold uppercase mb-1">Cash Out Date</div>
+                <div className="text-sm font-black text-accent uppercase">{runway?.current?.cash_out_date || runway?.currentMetrics?.cash_out_date || "N/A"}</div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* MODULE 4: UNICORN AGENT */}
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="col-span-12 lg:col-span-4 war-room-panel p-6 rounded-2xl flex flex-col space-y-6">
+          <div className="flex items-center gap-2 text-zinc-400 text-[11px] uppercase font-black tracking-widest border-b border-white/5 pb-4">
+            <ShieldAlert className="w-4 h-4 text-amber-500" /> Unicorn Agent
+          </div>
+          <div className="flex-1 space-y-4 overflow-y-auto scrollbar-hide">
+            {unicorn?.competitor_alerts?.map((alert, i) => (
+              <div key={i} className="p-4 border border-amber-500/20 bg-amber-500/5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">{alert.type} ALERT</span>
+                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                </div>
+                <p className="text-xs font-medium text-amber-100/90 leading-relaxed">{alert.signal}</p>
+                <p className="text-[10px] font-mono text-amber-500/60 mt-2">Impact: {alert.impact}</p>
+              </div>
+            ))}
+            {unicorn?.trend_shifts?.map((trend, i) => (
+              <div key={i} className="p-4 border border-white/5 bg-white/[0.02] rounded-xl space-y-2">
+                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Market Trend</span>
+                <p className="text-xs font-medium text-zinc-300 leading-relaxed">{trend.signal}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* MODULE 2: EXECUTION INTELLIGENCE */}
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="col-span-12 lg:col-span-4 war-room-panel p-6 rounded-2xl space-y-6">
+          <div className="flex items-center justify-between border-b border-white/5 pb-4">
+            <div className="flex items-center gap-2 text-zinc-400 text-[11px] uppercase font-black tracking-widest">
+              <Target className="w-4 h-4 text-blue-400" /> Execution Intel
+            </div>
+            {execution?.drift_detected && (
+              <span className="text-[9px] bg-red-500/10 border border-red-500/20 text-red-500 px-2 py-0.5 rounded font-black uppercase tracking-widest">
+                Drift Detected
+              </span>
+            )}
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-end gap-3 mb-6">
+              <div className="text-4xl font-black text-white">{execution?.score || 100}</div>
+              <div className="text-[10px] text-zinc-500 font-bold uppercase pb-1">Execution Score</div>
+            </div>
+            <div className="space-y-3">
+              {execution?.bottlenecks?.map((b, i) => (
+                <div key={i} className="p-3 bg-black/40 border border-white/5 rounded-xl border-l-2" style={{ borderLeftColor: b.severity === 'CRITICAL' ? '#ef4444' : '#3b82f6' }}>
+                  <div className="text-xs font-bold text-white mb-1 line-clamp-1">{b.task}</div>
+                  <div className="text-[10px] text-zinc-500 font-mono uppercase">{b.issue}</div>
+                </div>
+              ))}
+              {(!execution?.bottlenecks || execution.bottlenecks.length === 0) && (
+                <div className="text-xs text-zinc-500 italic">No execution bottlenecks detected.</div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* MODULE 3: GROWTH EXPERIMENTS */}
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="col-span-12 lg:col-span-4 war-room-panel p-6 rounded-2xl space-y-6">
+          <div className="flex items-center gap-2 text-zinc-400 text-[11px] uppercase font-black tracking-widest border-b border-white/5 pb-4">
+            <TrendingUp className="w-4 h-4 text-purple-400" /> Growth Engine
+          </div>
+          <div className="space-y-4">
+            {growth?.experiments?.map((exp, i) => (
+              <div key={i} className="p-4 border border-purple-500/10 bg-purple-500/5 hover:bg-purple-500/10 transition-colors rounded-xl space-y-3 cursor-pointer group">
+                <div className="flex justify-between items-start">
+                  <div className="text-xs font-bold text-white uppercase">{exp.name}</div>
+                  <div className="text-[9px] font-black text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">{exp.expected_roi}</div>
+                </div>
+                <p className="text-[10px] text-zinc-400 font-medium leading-relaxed">{exp.hypothesis}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* MODULE 5: DECISION AUDIT */}
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="col-span-12 lg:col-span-4 war-room-panel p-6 rounded-2xl space-y-6 flex flex-col">
+          <div className="flex items-center justify-between border-b border-white/5 pb-4">
+            <div className="flex items-center gap-2 text-zinc-400 text-[11px] uppercase font-black tracking-widest">
+              <History className="w-4 h-4 text-zinc-300" /> Decision Audit
+            </div>
+            <div className="text-[10px] text-zinc-500 font-mono">Vol: {audit?.total_decisions || 0}</div>
+          </div>
+          <div className="flex-1 flex flex-col justify-center space-y-6">
+            <div className="flex items-center justify-center gap-8">
+              <div className="text-center">
+                <div className="text-5xl font-black text-white">{audit?.founder_score || 0}</div>
+                <div className="text-[9px] text-zinc-500 font-black uppercase tracking-widest mt-2">Founder Score</div>
+              </div>
+              <div className="w-[1px] h-12 bg-white/10" />
+              <div className="text-center">
+                <div className="text-5xl font-black text-white">{audit?.win_rate || 0}%</div>
+                <div className="text-[9px] text-zinc-500 font-black uppercase tracking-widest mt-2">Win Rate</div>
+              </div>
+            </div>
+            <div className="p-4 bg-black/40 border border-white/5 rounded-xl text-center">
+              <div className="text-[9px] font-black text-accent uppercase tracking-widest mb-2">Pattern Detected</div>
+              <p className="text-xs text-zinc-300 italic">"{audit?.pattern_detected || "Awaiting enough decisions to analyze."}"</p>
+            </div>
+          </div>
+        </motion.div>
+
+      </div>
+    </div>
+  );
+};
