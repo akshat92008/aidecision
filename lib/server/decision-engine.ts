@@ -175,9 +175,11 @@ export class DecisionEngine {
   }
 }
 
+const nexusEngine = new DecisionEngine();
+
 export async function generateDecisionReport(
   refinedQuery: string, 
-  industryKillers: IndustryKiller[] = [],
+  industryKillers: any[] = [],
   onThought?: (agent: string, thought: string) => void
 ): Promise<FinalReport> {
   // Use the new Phase 1 Nexus Engine for all audits
