@@ -205,8 +205,44 @@ export const SimulationLab: React.FC<Props> = ({ onBack }) => {
                 animate={{ opacity: 1 }} 
                 className="space-y-10"
               >
-                {/* PRIMARY METRICS */}
-                <div className="grid grid-cols-3 gap-6">
+                {/* STRATEGIC AUDIT REPORT */}
+                <div className="grid grid-cols-12 gap-8">
+                   <div className="col-span-12 lg:col-span-4 p-8 border border-accent/20 bg-accent/5 rounded-3xl space-y-6 flex flex-col items-center justify-center text-center">
+                      <div className="space-y-1">
+                        <h4 className="text-[10px] font-black text-accent uppercase tracking-[0.3em]">Runway Score</h4>
+                        <div className="text-7xl font-black text-white">{simulationResult.auditReport.runwayScore}</div>
+                        <div className="text-[9px] font-black text-accent/60 uppercase tracking-widest">Efficiency Index</div>
+                      </div>
+                      <div className="p-4 border border-white/5 bg-black/40 rounded-xl w-full">
+                         <p className="text-[10px] leading-relaxed text-zinc-400 font-medium italic">
+                            "{simulationResult.auditReport.strategicInsight}"
+                         </p>
+                      </div>
+                   </div>
+
+                   <div className="col-span-12 lg:col-span-8 p-8 border border-white/5 bg-white/[0.01] rounded-3xl space-y-6">
+                      <div className="flex items-center gap-3">
+                         <Zap className="w-4 h-4 text-accent" />
+                         <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Prioritized Action Plan</h4>
+                      </div>
+                      <div className="space-y-3">
+                         {simulationResult.auditReport.prioritizedActionPlan.map((action: any, i: number) => (
+                           <div key={i} className="flex items-start gap-4 p-4 bg-white/5 border border-white/10 rounded-xl group hover:border-accent/30 transition-all">
+                              <div className={`mt-1 px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-widest ${
+                                action.level === 'CRITICAL' ? 'bg-red-500 text-white' : 
+                                action.level === 'URGENT' ? 'bg-amber-500 text-black' : 'bg-emerald-500 text-black'
+                              }`}>
+                                {action.level}
+                              </div>
+                              <p className="text-[11px] font-medium text-zinc-300">{action.task}</p>
+                           </div>
+                         ))}
+                      </div>
+                   </div>
+                </div>
+
+                {/* PRIMARY METRICS & HEATMAP */}
+                <div className="grid grid-cols-4 gap-6">
                    <div className="p-8 border border-white/5 bg-white/[0.02] rounded-2xl space-y-3">
                       <div className="flex items-center gap-2 text-zinc-500 uppercase text-[9px] font-black tracking-widest">
                          <Calendar className="w-3 h-3 text-accent" /> Runway
@@ -214,25 +250,24 @@ export const SimulationLab: React.FC<Props> = ({ onBack }) => {
                       <div className="text-3xl font-black text-white">
                         {simulationResult.currentMetrics.runway_months || "∞"} <span className="text-zinc-600 text-sm">Months</span>
                       </div>
-                      <div className="text-[10px] text-zinc-600 font-bold">Estimated Cash-Out: Next 18 Months</div>
                    </div>
-                   <div className="p-8 border border-white/5 bg-white/[0.02] rounded-2xl space-y-3">
-                      <div className="flex items-center gap-2 text-zinc-500 uppercase text-[9px] font-black tracking-widest">
-                         <TrendingDown className="w-3 h-3 text-red-500" /> Monthly Burn
+                   <div className="p-6 border border-white/5 bg-white/[0.02] rounded-2xl space-y-2">
+                      <span className="text-[8px] font-black text-zinc-600 uppercase">Burn Risk</span>
+                      <div className={`text-sm font-black uppercase ${simulationResult.auditReport.riskHeatmap.burnEfficiency === 'HIGH' ? 'text-red-500' : 'text-emerald-500'}`}>
+                        {simulationResult.auditReport.riskHeatmap.burnEfficiency}
                       </div>
-                      <div className="text-3xl font-black text-white">
-                        ₹{simulationResult.currentMetrics.burn_rate.toLocaleString()}
-                      </div>
-                      <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Baseline Signal</div>
                    </div>
-                   <div className="p-8 border border-white/5 bg-white/[0.02] rounded-2xl space-y-3">
-                      <div className="flex items-center gap-2 text-zinc-500 uppercase text-[9px] font-black tracking-widest">
-                         <ShieldCheck className="w-3 h-3 text-emerald-500" /> Survival Prop
-                      </div>
-                      <div className="text-3xl font-black text-white">
-                        {(simulationResult.currentMetrics.survival_probability * 100).toFixed(1)}%
-                      </div>
-                      <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Nexus Risk Model</div>
+                   <div className="p-6 border border-white/5 bg-white/[0.02] rounded-2xl space-y-2">
+                       <span className="text-[8px] font-black text-zinc-600 uppercase">Growth Velocity</span>
+                       <div className="text-sm font-black uppercase text-white">
+                          {simulationResult.auditReport.riskHeatmap.growthVelocity}
+                       </div>
+                   </div>
+                   <div className="p-6 border border-white/5 bg-white/[0.02] rounded-2xl space-y-2">
+                        <span className="text-[8px] font-black text-zinc-600 uppercase">Survival Confidence</span>
+                        <div className="text-sm font-black uppercase text-accent">
+                           {simulationResult.auditReport.riskHeatmap.survivalConfidence}
+                        </div>
                    </div>
                 </div>
 

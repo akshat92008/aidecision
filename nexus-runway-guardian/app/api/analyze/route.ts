@@ -36,37 +36,7 @@ export async function POST(req: Request) {
           // 3. Generate the report with the callback
           const finalReport = await generateDecisionReport(safeQuery, industryKillers, onThought);
 
-          // 4. STRATEGIC HANDSHAKE: Call Runway Guardian (Python) to merge liquidity signals
-          try {
-            const guardianUrl = process.env.RUNWAY_GUARDIAN_URL;
-            if (guardianUrl) {
-              onThought('NexusGuardian', 'Linking Strategic Verdict with Real-Time Liquidity Audit...');
-              const res = await fetch(`${guardianUrl}/audit-report`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  current_cash: 500000, // Default for now
-                  monthly_revenue: 0,
-                  monthly_fixed_costs: 50000,
-                  monthly_variable_costs: 0,
-                  team_size: 1,
-                  avg_salary_per_employee: 100000,
-                  growth_rate: 0
-                }),
-              });
-              
-              if (res.ok) {
-                const guardianData = await res.json();
-                // Merge into report
-                (finalReport as any).runway_guardian = guardianData.data;
-              }
-            }
-          } catch (gError) {
-            console.error("[Guardian Bridge Error]:", gError);
-            // Fallback: Just proceed with report only
-          }
-
-          // 5. PHASE 2: PERISTENCE
+          // 4. PHASE 2: PERISTENCE
           const supabase = await createClient();
           const { data: { user } } = await supabase.auth.getUser();
 

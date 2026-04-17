@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #050505;
+  --color-surface: #0a0a0a;
+  --color-surface-hover: #0f0f0f;
+  --color-accent: #10b981; /* Intel Emerald */
+  --color-text-primary: #e1e1e1;
+  --color-text-secondary: #71717a;
+  --color-border: rgba(255, 255, 255, 0.08);
+  
+  --font-mono: "JetBrains Mono", "Roboto Mono", monospace;
+  --font-sans: "JetBrains Mono", "Roboto Mono", monospace;
+
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 1rem;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+}
+
+/* HIGH-DENSITY "WAR ROOM" COMPONENTS */
+.war-room-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.terminal-header {
+  height: 32px;
+  background: #111;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 6px;
+}
+
+.terminal-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #333;
+}
+
+.command-input {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+  padding: 12px;
+  width: 100%;
+  outline: none;
+}
+
+.command-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+.status-active {
+  color: var(--color-accent);
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+.reasoning-stream {
+  border-left: 1px solid var(--color-border);
+  font-size: 11px;
+  line-height: 1.5;
+  color: #a1a1aa;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.scanline {
+  width: 100%;
+  height: 1px;
+  background: rgba(16, 185, 129, 0.03);
+  position: absolute;
+  top: 0;
+  z-index: 5;
+  pointer-events: none;
+  animation: scan 10s linear infinite;
+}
+
+@keyframes scan {
+  from { top: 0; }
+  to { top: 100%; }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+}

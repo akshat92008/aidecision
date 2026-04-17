@@ -104,18 +104,57 @@ export class SimulationEngine {
     return snapshots;
   }
 
+  private generateAuditReport(current: any) {
+    const runway = current.runway_months || 0;
+    const survival = current.survival_probability;
+    
+    // 1. Prioritized Action Plan
+    const actions = [];
+    if (runway <= 3) {
+      actions.push({ level: "CRITICAL", task: "Freeze all non-essential hiring and marketing spend immediately." });
+      actions.push({ level: "STRATEGIC", task: "Initiate bridge round or seed-extension conversations today." });
+    } else if (runway <= 6) {
+      actions.push({ level: "URGENT", task: "Audit vendor SaaS subscriptions for 20% cost reduction." });
+      actions.push({ level: "STRATEGIC", task: "Optimize sales cycle to accelerate MRR by 1.5x." });
+    } else {
+      actions.push({ level: "HEALTHY", task: "Maintain growth momentum while monitoring burn efficiency." });
+      actions.push({ level: "STRATEGIC", task: "Plan next milestone fundraise for 6 months from now." });
+    }
+
+    // 2. Risk Heatmap
+    const riskHeatmap = {
+      burnEfficiency: runway < 6 ? "HIGH" : "LOW",
+      growthVelocity: survival < 0.6 ? "LOW" : "STABLE",
+      survivalConfidence: `${Math.round(survival * 100)}%`
+    };
+
+    // 3. Strategic Score Calculation
+    const runwayWeight = Math.min(runway / 18, 1.0) * 60;
+    const survivalWeight = survival * 40;
+    const score = Math.round(runwayWeight + survivalWeight);
+
+    return {
+      runwayScore: score,
+      prioritizedActionPlan: actions,
+      riskHeatmap,
+      strategicInsight: `Nexus Risk Engine estimates a ${Math.round(survival * 100)}% transition success rate over the next 12 months.`
+    };
+  }
+
   runSimulation(fin: StartupFinancials) {
     const totalCosts = this.totalMonthlyCosts(fin);
     const burn = totalCosts - fin.monthly_revenue;
     const runway = burn <= 0 ? Infinity : fin.current_cash / burn;
     
-    const currentMetrics = {
+    const currentResults = {
       burn_rate: burn,
       runway_months: runway === Infinity ? null : Math.round(runway * 100) / 100,
       survival_probability: this.calculateSurvivalProbability(runway, fin.growth_rate),
       is_profitable: burn <= 0,
       projection: this.simulateCashFlow(fin.current_cash, fin.monthly_revenue, totalCosts, fin.growth_rate)
     };
+
+    const auditReport = this.generateAuditReport(currentResults);
 
     const scenarios = fin.planned_changes.map(change => {
       const newTotalCosts = this.totalMonthlyCosts(fin, change.hire_count, change.salary_per_hire, change.marketing_spend_change);
@@ -139,7 +178,7 @@ export class SimulationEngine {
       };
     });
 
-    return { currentMetrics, scenarios };
+    return { currentMetrics: currentResults, auditReport, scenarios };
   }
 }
 

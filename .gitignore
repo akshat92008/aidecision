@@ -5,3 +5,11 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Python & Deploy
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.gcloudignore
+deploy_prod.sh

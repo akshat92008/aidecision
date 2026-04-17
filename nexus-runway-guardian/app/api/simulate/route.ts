@@ -34,40 +34,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Check for External Runway Guardian (Python Cloud Service)
-    const guardianUrl = process.env.RUNWAY_GUARDIAN_URL;
-    if (guardianUrl) {
-      try {
-        const response = await fetch(`${guardianUrl}/audit-report`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(validation.data),
-        });
-
-        if (response.ok) {
-          const report = await response.json();
-          // The Python backend returns { status: "success", data: { ... } }
-          // We map it to the UI's expected format
-          return NextResponse.json({
-            currentMetrics: report.data.raw_metrics,
-            auditReport: {
-              runwayScore: report.data.runway_score,
-              prioritizedActionPlan: report.data.prioritized_action_plan,
-              riskHeatmap: report.data.risk_heatmap,
-              strategicInsight: report.data.strategic_insight
-            },
-            scenarios: [] // scenarios are handled in the full raw simulate if needed
-          });
-        }
-      } catch (err) {
-        console.error("External Guardian unreachable, falling back to local engine:", err);
-      }
-    }
-
-    // 2. Fallback to Internal Intelligence (Typescript Port)
     const result = simulationEngine.runSimulation(validation.data);
     return NextResponse.json(result);
-
   } catch (error: any) {
     console.error("Simulation Error:", error);
     return NextResponse.json(

@@ -33,6 +33,14 @@ export class DecisionEngine {
     constraints: Constraints,
     onThought?: (agent: string, thought: string) => void
   ): Promise<FinalReport> {
+    // 0. INPUT HARDENING: Truncate excessively long queries to prevent context timeouts
+    const MAX_QUERY_LENGTH = 4000;
+    let safeQuery = query;
+    if (query.length > MAX_QUERY_LENGTH) {
+      this.log('System', `Signal too strong (${query.length} chars). Truncating to vital context (4k limit)...`, onThought);
+      safeQuery = query.substring(0, MAX_QUERY_LENGTH);
+    }
+
     this.log('System', 'Initializing Nexus Strategic Audit Pipeline...', onThought);
 
     // 1. MARKET ANALYSIS (MCA / Startup India / Bharat Patterns)

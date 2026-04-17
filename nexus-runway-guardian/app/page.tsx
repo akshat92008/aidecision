@@ -42,16 +42,6 @@ export default function Home() {
   const supabase = createClient();
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const switchPhase = (newPhase: typeof phase) => {
-    if (isProcessing && abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      setIsProcessing(false);
-    }
-    setPhase(newPhase);
-    setError(null);
-  };
 
   useEffect(() => {
     // Initial Auth Check
@@ -97,13 +87,9 @@ export default function Home() {
 
     setQuery(q);
     setConstraints(c);
-    setThoughts([]); // Reset thoughts on new audit
     setIsProcessing(true);
     setPhase('PROCESSING');
     setError(null);
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
     setThoughts([{ agent: 'NexusCore', thought: 'Initializing Guardrails & Signal Verification...', timestamp: new Date().toISOString() }]);
 
     try {
@@ -111,7 +97,6 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q, constraints: c }),
-        signal: controller.signal
       });
 
       if (!res.ok) throw new Error("Connection Failure");
@@ -149,12 +134,10 @@ export default function Home() {
         }
       }
     } catch (err: any) {
-      if (err.name === 'AbortError') return;
       setError(err.message || "Protocol Error");
       setIsProcessing(false);
     } finally {
       setIsProcessing(false);
-      abortControllerRef.current = null;
     }
   };
 
@@ -168,22 +151,22 @@ export default function Home() {
             <Brain className="w-6 h-6 text-accent" />
          </div>
          <nav className="flex flex-col gap-8 opacity-40">
-            <div onClick={() => switchPhase('INTAKE')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'INTAKE' ? 'text-accent opacity-100' : ''}`}>
+            <div onClick={() => setPhase('INTAKE')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'INTAKE' ? 'text-accent opacity-100' : ''}`}>
                <Plus className="w-6 h-6" />
             </div>
-            <div onClick={() => switchPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
+            <div onClick={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
                <Layout className="w-5 h-5" />
             </div>
-            <div onClick={() => switchPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
+            <div onClick={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
                <Database className="w-5 h-5" />
             </div>
-            <div onClick={() => switchPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
+            <div onClick={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
                <ShieldCheck className="w-5 h-5" />
             </div>
-            <div onClick={() => switchPhase(user ? 'PORTFOLIO' : 'IDLE')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'PORTFOLIO' ? 'text-accent opacity-100' : ''}`}>
+            <div onClick={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'PORTFOLIO' ? 'text-accent opacity-100' : ''}`}>
                <History className="w-5 h-5" />
             </div>
-            <div onClick={() => switchPhase('SIMULATION')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'SIMULATION' ? 'text-accent opacity-100' : ''}`}>
+            <div onClick={() => setPhase('SIMULATION')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'SIMULATION' ? 'text-accent opacity-100' : ''}`}>
                <Activity className="w-5 h-5" />
             </div>
          </nav>

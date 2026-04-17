@@ -59,7 +59,7 @@ export const FounderBrief = ({ onComplete, isProcessing }: FounderBriefProps) =>
             <div className="space-y-2">
               <label className="terminal-text text-[11px] uppercase font-bold text-accent">Core Mission & Problem Space</label>
               <textarea 
-                className="command-input min-h-[160px] text-lg leading-relaxed" 
+                className="command-input min-h-[160px] max-h-[300px] overflow-y-auto text-lg leading-relaxed scrollbar-hide" 
                 placeholder="What deep problem are you solving in Bharat?"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}

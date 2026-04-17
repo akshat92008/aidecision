@@ -139,29 +139,27 @@ export default function ReportView({ report, query, onReset }: ReportViewProps) 
                       <p className="text-xl leading-relaxed text-zinc-300 font-medium">{report.summary}</p>
                    </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                      <div className="p-8 border border-white/5 bg-white/2 backdrop-blur-sm space-y-4 rounded-xl">
-                         <span className="terminal-text text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Market Demand</span>
-                         <div className="text-3xl font-black text-white">{report.score_breakdown.demand}<span className="text-sm opacity-30">/30</span></div>
-                         <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${(report.score_breakdown.demand / 30) * 100}%` }} className="bg-accent h-full shadow-[0_0_10px_var(--color-accent)]" />
+                   <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                       <div className="p-8 border border-white/5 bg-white/2 backdrop-blur-sm space-y-4 rounded-xl">
+                          <span className="terminal-text text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Market Demand</span>
+                          <div className="text-3xl font-black text-white">{report.score_breakdown.demand}<span className="text-sm opacity-30">/30</span></div>
+                       </div>
+                       <div className="p-8 border border-white/5 bg-white/2 space-y-4 rounded-xl">
+                          <span className="terminal-text text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Execution Cap</span>
+                          <div className="text-3xl font-black text-white">{report.score_breakdown.execution}<span className="text-sm opacity-30">/40</span></div>
+                       </div>
+                       <div className="p-8 border border-white/5 bg-red-500/5 space-y-4 rounded-xl">
+                          <span className="terminal-text text-[10px] uppercase tracking-widest text-red-500 font-bold">Regulatory Penalty</span>
+                          <div className="text-3xl font-black text-red-500">-{report.score_breakdown.regulatory_penalty}<span className="text-sm opacity-30">/30</span></div>
+                       </div>
+                       {(report as any).runway_guardian && (
+                         <div className="p-8 border border-accent/20 bg-accent/5 space-y-4 rounded-xl">
+                            <span className="terminal-text text-[10px] uppercase tracking-widest text-accent font-bold">Capital Survival</span>
+                            <div className="text-3xl font-black text-accent">{(report as any).runway_guardian.runway_score}<span className="text-sm opacity-30">/100</span></div>
+                            <div className="terminal-text text-[8px] text-accent/50 uppercase">Cloud Sync Active</div>
                          </div>
-                      </div>
-                      <div className="p-8 border border-white/5 bg-white/2 space-y-4 rounded-xl">
-                         <span className="terminal-text text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Execution Cap</span>
-                         <div className="text-3xl font-black text-white">{report.score_breakdown.execution}<span className="text-sm opacity-30">/40</span></div>
-                         <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${(report.score_breakdown.execution / 40) * 100}%` }} className="bg-accent h-full shadow-[0_0_10px_var(--color-accent)]" />
-                         </div>
-                      </div>
-                      <div className="p-8 border border-white/5 bg-red-500/5 space-y-4 rounded-xl">
-                         <span className="terminal-text text-[10px] uppercase tracking-widest text-red-500 font-bold">Regulatory Penalty</span>
-                         <div className="text-3xl font-black text-red-500">-{report.score_breakdown.regulatory_penalty}<span className="text-sm opacity-30">/30</span></div>
-                         <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${(report.score_breakdown.regulatory_penalty / 30) * 100}%` }} className="bg-red-500 h-full shadow-[0_0_10px_#f87171]" />
-                         </div>
-                      </div>
-                   </div>
+                       )}
+                    </div>
 
                    <div className="space-y-8">
                       <div className="terminal-text text-[11px] uppercase font-black text-accent tracking-[0.3em]">Competitor Threat Matrix</div>
@@ -340,37 +338,54 @@ export default function ReportView({ report, query, onReset }: ReportViewProps) 
              )}
 
              {activeTab === 'simulator' && (
-                <motion.div key="simulator" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 max-w-4xl">
-                   <div className="space-y-4">
-                      <div className="terminal-text text-[11px] uppercase font-black text-accent tracking-[0.3em]">Strategic War Room (Scenario Simulation)</div>
-                      <p className="text-zinc-500 text-sm font-medium">Model market shocks and recalculate venture viability scores in real-time.</p>
-                   </div>
-                   
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {[
-                        { title: 'Market Shock', desc: 'Competitor enters with aggressive pricing.', icon: TrendingDown },
-                        { title: 'Capital Shock', desc: '50% budget cut or funding delay.', icon: Banknote },
-                        { title: 'Regulatory Shock', desc: 'Sudden DPDP audit or compliance shift.', icon: ShieldAlert },
-                        { title: 'Growth Shock', desc: 'Viral growth exceeds tech infrastructure.', icon: Zap }
-                      ].map((s, i) => (
-                        <button key={i} className="p-8 border border-white/5 bg-[#0a0a0a] rounded-2xl text-left space-y-4 hover:border-accent/40 transition-all group active:scale-95">
-                           <div className="w-10 h-10 bg-accent/10 border border-accent/20 rounded-lg flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                              <s.icon className="w-5 h-5 text-accent" />
-                           </div>
-                           <div className="space-y-1">
-                              <h4 className="text-sm font-black text-white uppercase tracking-tight">{s.title}</h4>
-                              <p className="text-[11px] text-zinc-600 font-medium">{s.desc}</p>
-                           </div>
-                        </button>
-                      ))}
-                   </div>
-                   
-                   <div className="p-10 border border-white/5 bg-[#0a0a0a] rounded-3xl border-dashed flex flex-col items-center justify-center text-center space-y-4 opacity-30">
-                      <LayoutGrid className="w-12 h-12 text-zinc-700" />
-                      <span className="terminal-text text-[10px] uppercase font-black tracking-[0.3em]">Awaiting Scenario Initialization...</span>
-                   </div>
-                </motion.div>
-             )}
+                 <motion.div key="simulator" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12 max-w-4xl">
+                    <div className="space-y-4">
+                       <div className="terminal-text text-[11px] uppercase font-black text-accent tracking-[0.3em]">Strategic War Room (Scenario Simulation)</div>
+                       <p className="text-zinc-500 text-sm font-medium">Model market shocks and recalculate venture viability scores in real-time.</p>
+                    </div>
+
+                    {(report as any).runway_guardian ? (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                         <div className="p-8 border border-white/5 bg-[#0a0a0a] rounded-2xl space-y-4">
+                            <span className="terminal-text text-[10px] uppercase tracking-widest text-zinc-500">Liquidity Status</span>
+                            <div className="text-xl font-black text-white uppercase">{(report as any).runway_guardian.runway_status}</div>
+                         </div>
+                         <div className="p-8 border border-white/5 bg-[#0a0a0a] rounded-2xl space-y-4">
+                            <span className="terminal-text text-[10px] uppercase tracking-widest text-zinc-500">Survival Prob.</span>
+                            <div className="text-xl font-black text-white uppercase">{(report as any).runway_guardian.risk_heatmap.survivalConfidence}</div>
+                         </div>
+                         <div className="p-8 border border-white/5 bg-[#0a0a0a] rounded-2xl space-y-4">
+                            <span className="terminal-text text-[10px] uppercase tracking-widest text-zinc-500">Burn Efficiency</span>
+                            <div className="text-xl font-black text-accent uppercase">{(report as any).runway_guardian.risk_heatmap.burnEfficiency}</div>
+                         </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         {[
+                           { title: 'Market Shock', desc: 'Competitor enters with aggressive pricing.', icon: TrendingDown },
+                           { title: 'Capital Shock', desc: '50% budget cut or funding delay.', icon: Banknote },
+                           { title: 'Regulatory Shock', desc: 'Sudden DPDP audit or compliance shift.', icon: ShieldAlert },
+                           { title: 'Growth Shock', desc: 'Viral growth exceeds tech infrastructure.', icon: Zap }
+                         ].map((s, i) => (
+                           <button key={i} className="p-8 border border-white/5 bg-[#0a0a0a] rounded-2xl text-left space-y-4 hover:border-accent/40 transition-all group active:scale-95">
+                              <div className="w-10 h-10 bg-accent/10 border border-accent/20 rounded-lg flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                                 <s.icon className="w-5 h-5 text-accent" />
+                              </div>
+                              <div className="space-y-1">
+                                 <h4 className="text-sm font-black text-white uppercase tracking-tight">{s.title}</h4>
+                                 <p className="text-[11px] text-zinc-600 font-medium">{s.desc}</p>
+                              </div>
+                           </button>
+                         ))}
+                      </div>
+                    )}
+                    
+                    <div className="p-10 border border-white/5 bg-[#0a0a0a] rounded-3xl border-dashed flex flex-col items-center justify-center text-center space-y-4">
+                       <LayoutGrid className="w-12 h-12 text-zinc-700" />
+                       <span className="terminal-text text-[10px] uppercase font-black tracking-[0.3em]">Simulation Grid Synchronized with Cloud Guardian</span>
+                    </div>
+                 </motion.div>
+              )}
 
              {activeTab === 'assets' && (
                 <motion.div key="assets" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12 max-w-4xl">
