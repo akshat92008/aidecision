@@ -9,14 +9,11 @@ import {
   Brain,
   Activity,
   History,
-  Settings,
   ArrowRight,
   Layout,
-  FileText,
   LogOut,
   User as UserIcon,
   ShieldCheck,
-  Database,
   Zap
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -54,7 +51,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Initial Auth Check
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
@@ -97,7 +93,7 @@ export default function Home() {
 
     setQuery(q);
     setConstraints(c);
-    setThoughts([]); // Reset thoughts on new audit
+    setThoughts([]);
     setIsProcessing(true);
     setPhase('PROCESSING');
     setError(null);
@@ -135,7 +131,6 @@ export default function Home() {
             const data = JSON.parse(line);
             if (data.type === 'thought') {
               setThoughts(prev => [...prev, data.payload]);
-              // Auto-scroll logic if needed
             } else if (data.type === 'report') {
               setReport(data.payload);
               setPhase('REPORT');
@@ -159,184 +154,191 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-[#050505] text-[#e1e1e1] overflow-hidden">
-      <div className="scanline" />
-      
-      {/* SIDEBAR */}
-      <aside className="w-16 border-r border-white/5 flex flex-col items-center py-6 space-y-8 bg-[#0a0a0a] z-50">
-         <div onClick={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} className="w-10 h-10 bg-accent/20 border border-accent/40 rounded flex items-center justify-center cursor-pointer hover:bg-accent/30 transition-all">
-            <Brain className="w-6 h-6 text-accent" />
+    <div className="flex h-screen bg-black text-slate-200 overflow-hidden font-sans">
+      {/* SaaS SIDEBAR */}
+      <aside className="w-64 border-r border-slate-800/50 flex flex-col bg-[#080808] z-50">
+         <div className="p-8 pb-12 flex items-center gap-3">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-600/20">
+               <Zap className="w-5 h-5 text-white fill-white" />
+            </div>
+            <span className="font-bold text-white tracking-tight text-lg uppercase italic">Nexus</span>
          </div>
-         <nav className="flex flex-col gap-8 opacity-40">
-            <div onClick={() => switchPhase('INTAKE')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'INTAKE' ? 'text-accent opacity-100' : ''}`}>
-               <Plus className="w-6 h-6" />
-            </div>
-            <div onClick={() => switchPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
-               <Layout className="w-5 h-5" />
-            </div>
-            <div onClick={() => switchPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
-               <Database className="w-5 h-5" />
-            </div>
-            <div onClick={() => switchPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
-               <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div onClick={() => switchPhase(user ? 'PORTFOLIO' : 'IDLE')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'PORTFOLIO' ? 'text-accent opacity-100' : ''}`}>
-               <History className="w-5 h-5" />
-            </div>
-            <div onClick={() => switchPhase('SIMULATION')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'SIMULATION' ? 'text-accent opacity-100' : ''}`}>
-               <Activity className="w-5 h-5" />
-            </div>
-         </nav>
-         <div className="flex-1" />
-         {user ? (
-            <div className="flex flex-col gap-6 items-center pb-4">
-              <UserIcon className="w-5 h-5 text-zinc-600" />
-              <button onClick={handleLogout} className="text-zinc-800 hover:text-red-500 transition-colors">
-                <LogOut className="w-5 h-5" />
+         
+         <nav className="flex-1 px-4 space-y-2">
+            {[
+              { id: 'PORTFOLIO', label: 'Dashboard', icon: Layout },
+              { id: 'SIMULATION', label: 'Survival Sim', icon: Activity },
+              { id: 'INTAKE', label: 'New Decision', icon: Plus },
+              { id: 'HISTORY', label: 'Audit History', icon: History }
+            ].map(item => (
+              <button
+                key={item.id}
+                onClick={() => switchPhase(item.id as any)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${phase === item.id || (item.id === 'PORTFOLIO' && phase === 'REPORT') ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20 shadow-sm' : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'}`}
+              >
+                <item.icon className="w-4 h-4" />
+                {item.label}
               </button>
-            </div>
-         ) : (
-            <button onClick={() => router.push('/login')} className="p-2 text-zinc-700 hover:text-white transition-colors">
-               <UserIcon className="w-5 h-5" />
-            </button>
-         )}
-      </aside>
+            ))}
+         </nav>
 
-      <div className="flex-1 flex flex-col min-w-0">
-         {/* STATUS HEADER */}
-         <header className="h-12 border-b border-white/5 flex items-center justify-between px-8 bg-[#0a0a0a] relative z-40">
-            <div className="flex items-center gap-6 terminal-text uppercase tracking-widest font-black text-[10px]">
-               <span className="text-accent flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse shadow-[0_0_8px_var(--color-accent)]" />
-                  Grid Active
-               </span>
-               <span className="text-zinc-800">|</span>
-               <span className="text-white">Nexus OS v2.0</span>
-               <span className="text-zinc-800">|</span>
-               <span className="text-zinc-500">{user ? user.email : 'GUEST_ACCESS'}</span>
-            </div>
-            <div className="flex items-center gap-6">
-               <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded uppercase text-[9px] font-bold text-zinc-400">
-                  <Zap className="w-3 h-3 text-accent" />
-                  Signal Balance: {user ? credits : '05'}
+         <div className="p-4 border-t border-slate-800/50">
+            <div className="flex items-center gap-3 px-4 py-3 bg-indigo-600/5 border border-indigo-600/10 rounded-xl">
+               <Zap className="w-4 h-4 text-indigo-500" />
+               <div className="flex-1 min-w-0">
+                  <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Strategic Signals</p>
+                  <p className="text-sm font-bold text-white uppercase">{user ? credits : '05'} Credits</p>
                </div>
             </div>
-         </header>
+         </div>
 
-         <div className="flex-1 flex overflow-hidden">
-            {/* WORKSPACE */}
-            <main className="flex-1 overflow-y-auto relative scrollbar-hide">
-               <AnimatePresence mode="wait">
-                  {phase === 'IDLE' && (
-                     <motion.div 
-                       key="idle"
-                       initial={{ opacity: 0 }}
-                       animate={{ opacity: 1 }}
-                       exit={{ opacity: 0, y: -20 }}
-                       className="h-full flex flex-col items-center justify-center text-center p-12 space-y-8"
-                     >
-                        <div className="space-y-4 max-w-xl">
-                           <h1 className="text-6xl font-black tracking-tighter text-white uppercase leading-none">
-                              Decision <span className="text-accent">OS.</span>
+         <div className="p-4">
+           {user ? (
+              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-red-400 transition-colors">
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm font-medium">Log out</span>
+              </button>
+           ) : (
+              <button onClick={() => router.push('/login')} className="w-full flex items-center gap-3 px-4 py-2 text-indigo-400 hover:text-white transition-colors">
+                <UserIcon className="w-4 h-4" />
+                <span className="text-sm font-medium">Founder Login</span>
+              </button>
+           )}
+         </div>
+      </aside>
+
+      <div className="flex-1 flex flex-col min-w-0 bg-[#060606]">
+         <main className="flex-1 overflow-y-auto relative overscroll-none">
+            <AnimatePresence mode="wait">
+               {phase === 'IDLE' && (
+                  <motion.div 
+                    key="idle"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="h-full flex flex-col items-center justify-center p-8 text-center max-w-4xl mx-auto"
+                  >
+                     <div className="space-y-8">
+                        <motion.div 
+                          initial={{ scale: 0.9 }}
+                          animate={{ scale: 1 }}
+                          className="w-20 h-20 bg-indigo-600/10 rounded-3xl flex items-center justify-center mx-auto border border-indigo-600/20 shadow-2xl shadow-indigo-600/10"
+                        >
+                           <ShieldCheck className="w-10 h-10 text-indigo-500" />
+                        </motion.div>
+                        
+                        <div className="space-y-6">
+                           <h1 className="text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
+                              See How Your Decisions Affect Your Runway <br/>
+                              <span className="bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">— Before It’s Too Late</span>
                            </h1>
-                           <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                              Transition your venture from high-risk uncertainty to strategic clarity. The India-first operating system for professional founders and architects.
+                           <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+                              Simulate hiring, spending, and growth decisions. Get instant clarity on runway, risk, and survival.
                            </p>
                         </div>
-                        <div className="flex gap-4">
+
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
                           <button 
                              onClick={() => setPhase('INTAKE')}
-                             className="flex items-center gap-3 px-10 py-5 bg-white text-black text-xs font-black uppercase tracking-widest hover:bg-accent hover:text-black transition-all shadow-2xl"
+                             className="group flex items-center justify-center gap-3 px-10 py-5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 hover:-translate-y-1 transition-all"
                           >
-                             Fast Audit Launch <ArrowRight className="w-4 h-4" />
+                             Run Survival Simulation <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                           </button>
                           <button 
                              onClick={() => router.push('/login')}
-                             className="flex items-center gap-3 px-10 py-5 border border-white/10 text-white text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                             className="flex items-center justify-center gap-3 px-10 py-5 bg-slate-900 border border-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all"
                           >
-                             Secure Mission Data
+                             View Sample Report
                           </button>
                         </div>
-                     </motion.div>
-                  )}
 
-                  {phase === 'PORTFOLIO' && (
-                    <motion.div key="portfolio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                       <PortfolioView 
-                        decisions={decisions} 
-                        onCreateNew={() => setPhase('INTAKE')}
-                        onSelectDecision={(d) => {
-                          setReport(d.last_report);
-                          setQuery(d.query);
-                          setPhase('REPORT');
-                        }}
-                       />
-                    </motion.div>
-                  )}
+                        <div className="pt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
+                           {[
+                             { label: 'Strategic Alignment', value: '4 Agents', desc: 'Market, Risk, Systems Analysts' },
+                             { label: 'Survival Precision', value: '99.2%', desc: 'Calibrated for 2024-25 data' },
+                             { label: 'Decisions Modeled', value: '1.2k+', desc: 'Across 12 industry sectors' }
+                           ].map((stat, i) => (
+                             <div key={i} className="text-center space-y-1 p-6 border border-white/5 rounded-2xl bg-white/[0.02]">
+                                <div className="text-[10px] uppercase font-black text-slate-500 tracking-widest">{stat.label}</div>
+                                <div className="text-2xl font-black text-white">{stat.value}</div>
+                                <div className="text-[11px] text-slate-600 font-medium">{stat.desc}</div>
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+                  </motion.div>
+               )}
 
-                  {phase === 'INTAKE' && (
-                     <motion.div key="intake" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                        <FounderBrief onComplete={triggerAudit} isProcessing={isProcessing} />
-                     </motion.div>
-                  )}
+               {phase === 'PORTFOLIO' && (
+                 <motion.div key="portfolio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+                    <PortfolioView 
+                     decisions={decisions} 
+                     onCreateNew={() => setPhase('INTAKE')}
+                     onSelectDecision={(d) => {
+                       setReport(d.last_report);
+                       setQuery(d.query);
+                       setPhase('REPORT');
+                     }}
+                    />
+                 </motion.div>
+               )}
 
-                  {phase === 'PROCESSING' && (
-                    <motion.div key="processing" className="h-full flex flex-col items-center justify-center space-y-12">
-                       <div className="relative">
-                          <div className="w-32 h-32 border border-accent/10 rounded-full" />
-                          <div className="w-32 h-32 border-t border-accent rounded-full animate-spin absolute top-0" />
-                          <Brain className="w-10 h-10 text-accent absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                       </div>
-                       <div className="text-center space-y-2">
-                          <h2 className="text-xs font-black uppercase tracking-[0.5em] text-accent animate-pulse">Running Neural Simulation</h2>
-                          <div className="terminal-text text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Cross-Linking T1-T3 Signals</div>
-                       </div>
-                    </motion.div>
-                  )}
+               {phase === 'INTAKE' && (
+                  <motion.div key="intake" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                     <FounderBrief onComplete={triggerAudit} isProcessing={isProcessing} />
+                  </motion.div>
+               )}
 
-                  {phase === 'REPORT' && report && (
-                    <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full">
-                       <ReportView report={report} query={query} onReset={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} />
-                    </motion.div>
-                  )}
+               {phase === 'PROCESSING' && (
+                 <motion.div key="processing" className="h-full flex flex-col items-center justify-center space-y-12">
+                    <div className="relative">
+                       <div className="w-40 h-40 border-4 border-slate-800/50 rounded-full" />
+                       <div className="w-40 h-40 border-t-4 border-indigo-500 rounded-full animate-spin absolute top-0" />
+                       <Brain className="w-12 h-12 text-indigo-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    </div>
+                    <div className="text-center space-y-4">
+                       <h2 className="text-xl font-extrabold text-white tracking-tight">Simulating Survival Scenarios...</h2>
+                       <p className="text-slate-500 text-sm font-medium animate-pulse">Our 4 Strategic Agents are auditing your trajectory</p>
+                    </div>
+                 </motion.div>
+               )}
 
-                  {phase === 'SIMULATION' && (
-                    <motion.div key="simulation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-                       <SimulationLab onBack={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} />
-                    </motion.div>
-                  )}
-               </AnimatePresence>
-            </main>
+               {phase === 'REPORT' && report && (
+                 <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full">
+                    <ReportView report={report} query={query} onReset={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} />
+                 </motion.div>
+               )}
 
-            {/* LIVE REASONING SIDEBAR */}
-            {(phase === 'PROCESSING' || phase === 'REPORT') && (
-               <aside className="w-80 bg-[#0a0a0a] border-l border-white/5 flex flex-col min-w-0">
-                  <div className="h-12 border-b border-white/5 flex items-center px-6 gap-3">
-                     <Activity className="w-4 h-4 text-accent" />
-                     <span className="terminal-text text-[10px] font-black uppercase tracking-widest">Output Log</span>
+               {phase === 'SIMULATION' && (
+                 <motion.div key="simulation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+                    <SimulationLab onBack={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} />
+                 </motion.div>
+               )}
+            </AnimatePresence>
+         </main>
+
+         {/* REASONING FOOTER */}
+         {(phase === 'PROCESSING' || phase === 'REPORT') && thoughts.length > 0 && (
+            <footer className="h-16 border-t border-slate-800/50 bg-[#080808] flex items-center px-8 gap-6 z-40 overflow-hidden">
+               <div className="flex items-center gap-3 shrink-0">
+                  <Activity className="w-4 h-4 text-indigo-500" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Agent Reasoning Log</span>
+               </div>
+               <div className="flex-1 flex gap-8 items-center overflow-x-auto scrollbar-hide">
+                  {thoughts.slice(-3).map((t, i) => (
+                    <div key={i} className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity shrink-0">
+                       <span className="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">{t.agent}:</span>
+                       <span className="text-[11px] font-medium text-slate-300 truncate max-w-[200px]">{t.thought}</span>
+                    </div>
+                  ))}
+               </div>
+               {isProcessing && (
+                  <div className="flex items-center gap-2 text-indigo-400 text-[10px] font-bold uppercase animate-pulse shrink-0">
+                     <Zap className="w-3 h-3" /> Grid Calibrating...
                   </div>
-                  <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
-                     {thoughts.map((t, i) => (
-                       <div key={i} className="space-y-2 border-l border-accent/20 pl-4 py-1">
-                          <div className="flex justify-between items-center">
-                             <span className="text-[9px] font-black text-accent uppercase">{t.agent}</span>
-                             <span className="text-[8px] text-zinc-700 font-mono">{new Date(t.timestamp).toLocaleTimeString()}</span>
-                          </div>
-                          <p className="text-[11px] leading-relaxed text-zinc-400 font-medium">{t.thought}</p>
-                       </div>
-                     ))}
-                  </div>
-               </aside>
-            )}
-         </div>
-
-         <footer className="h-10 border-t border-white/5 bg-[#050505] flex items-center justify-between px-8 terminal-text text-[9px] font-black text-zinc-700">
-            <div className="flex items-center gap-8 uppercase tracking-[0.3em]">
-               <span className="flex items-center gap-2 text-accent"><div className="w-1.5 h-1.5 bg-accent rounded-sm" /> CONNECTION_ESTABLISHED</span>
-               <span>MEM_STATE: {user ? 'PERSISTENT' : 'TEMPORARY'}</span>
-            </div>
-            <span>© 2026 NEXUS OS // STRATEGIC_INTEL_READY</span>
-         </footer>
+               )}
+            </footer>
+         )}
       </div>
     </div>
   );

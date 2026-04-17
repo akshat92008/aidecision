@@ -73,20 +73,20 @@ export const SimulationLab: React.FC<Props> = ({ onBack }) => {
   };
 
   return (
-    <div className="h-full flex flex-col p-12 bg-black/40 overflow-y-auto">
+    <div className="h-full flex flex-col p-8 bg-[#080808] overflow-y-auto">
       <div className="max-w-7xl mx-auto w-full space-y-12">
         {/* HEADER */}
-        <div className="flex justify-between items-end border-b border-white/5 pb-8">
-          <div className="space-y-2">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-accent">Strategic Frontier</h2>
-            <h1 className="text-4xl font-black uppercase tracking-tighter text-white">Simulation Lab <span className="text-zinc-800">v1.0</span></h1>
+        <div className="flex justify-between items-end border-b border-slate-800/50 pb-8">
+          <div className="space-y-1">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500 bg-indigo-500/10 px-3 py-1 rounded inline-block">Real-Time Scenario Model</h2>
+            <h1 className="text-3xl font-black text-white uppercase tracking-tight">Runway Simulation Lab</h1>
           </div>
           <button 
             onClick={runSimulation}
             disabled={isLoading}
-            className="flex items-center gap-3 px-8 py-4 bg-white text-black text-[11px] font-black uppercase tracking-widest hover:bg-accent hover:text-black transition-all disabled:opacity-50"
+            className="flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white text-[11px] font-black uppercase tracking-widest hover:bg-indigo-500 transition-all disabled:opacity-50 rounded-xl shadow-lg shadow-indigo-600/20"
           >
-            {isLoading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            {isLoading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-white" />}
             Execute Scenarios
           </button>
         </div>
@@ -95,31 +95,26 @@ export const SimulationLab: React.FC<Props> = ({ onBack }) => {
           {/* INPUTS COLUMN */}
           <div className="col-span-12 lg:col-span-4 space-y-10">
             <section className="space-y-6">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-zinc-700 rounded-full" /> Baseline Metrics
+              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                Baseline Financial Metrics
               </h3>
               
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
                 {[
                   { label: "Current Cash", key: "current_cash", prefix: "₹" },
                   { label: "Monthly Revenue", key: "monthly_revenue", prefix: "₹" },
-                  { label: "Fixed Costs", key: "monthly_fixed_costs", prefix: "₹" },
-                  { label: "Variable Costs", key: "monthly_variable_costs", prefix: "₹" },
-                  { label: "Team Size", key: "team_size" },
-                  { label: "Avg Salary", key: "avg_salary_per_employee", prefix: "₹" },
-                  { label: "Growth Rate", key: "growth_rate", suffix: "%" }
+                  { label: "Fixed Costs", key: "monthly_fixed_costs", prefix: "₹" }
                 ].map((input) => (
-                  <div key={input.key} className="space-y-2">
-                    <label className="text-[9px] font-black uppercase text-zinc-600 tracking-wider font-mono">{input.label}</label>
-                    <div className="flex items-center bg-white/5 border border-white/10 p-3 rounded group focus-within:border-accent/40 transition-colors">
-                      {input.prefix && <span className="text-zinc-600 mr-2 text-xs">{input.prefix}</span>}
+                  <div key={input.key} className="space-y-2 p-5 bg-white/[0.02] border border-white/5 rounded-2xl group focus-within:border-indigo-500/40 transition-all">
+                    <label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">{input.label}</label>
+                    <div className="flex items-center">
+                      {input.prefix && <span className="text-slate-600 mr-2 text-sm font-bold">{input.prefix}</span>}
                       <input 
                         type="number"
-                        className="bg-transparent w-full focus:outline-none text-xs text-white font-mono"
+                        className="bg-transparent w-full focus:outline-none text-lg text-white font-bold"
                         value={(financials as any)[input.key]}
                         onChange={(e) => setFinancials(prev => ({ ...prev, [input.key]: parseFloat(e.target.value) || 0 }))}
                       />
-                      {input.suffix && <span className="text-zinc-600 ml-2 text-xs">{input.suffix}</span>}
                     </div>
                   </div>
                 ))}
@@ -128,17 +123,21 @@ export const SimulationLab: React.FC<Props> = ({ onBack }) => {
 
             <section className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" /> Frontier Scenarios
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  Strategic Variants
                 </h3>
-                <button onClick={addScenario} className="text-[9px] font-black uppercase text-accent hover:text-white transition-colors">
-                  + Add Variant
+                <button 
+                  onClick={addScenario} 
+                  className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black uppercase text-slate-400 hover:text-white transition-all hover:bg-white/10"
+                >
+                  + Add Scenario
                 </button>
               </div>
 
               <div className="space-y-4">
                 {financials.planned_changes.map((scenario, sIdx) => (
-                  <div key={sIdx} className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-4">
+                  <div key={sIdx} className="p-6 bg-white/[0.04] border border-white/10 rounded-2xl space-y-6 relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600 opacity-20 group-hover:opacity-100 transition-all" />
                     <input 
                        className="bg-transparent border-b border-white/10 w-full text-[11px] font-bold uppercase text-white pb-2 focus:outline-none focus:border-accent"
                        value={scenario.label}

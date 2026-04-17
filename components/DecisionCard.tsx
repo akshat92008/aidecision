@@ -18,8 +18,8 @@ interface DecisionCardProps {
 }
 
 export const DecisionCard = ({ decision, onClick }: DecisionCardProps) => {
-  const completedMilestones = decision.milestones.filter(m => m.status === 'completed').length;
-  const totalMilestones = decision.milestones.length;
+  const completedMilestones = (decision.milestones || []).filter(m => m.status === 'completed').length;
+  const totalMilestones = (decision.milestones || []).length;
   const progress = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
 
   return (
@@ -38,9 +38,9 @@ export const DecisionCard = ({ decision, onClick }: DecisionCardProps) => {
             <span className="terminal-text text-[9px] uppercase font-black px-2 py-0.5 bg-accent/10 text-accent rounded border border-accent/20">
                {decision.status}
             </span>
-            <span className="text-zinc-700 font-mono text-[9px]">{new Date(decision.updated_at).toLocaleDateString()}</span>
+            <span className="text-zinc-700 font-mono text-[9px]">{decision.updated_at ? new Date(decision.updated_at).toLocaleDateString() : 'N/A'}</span>
           </div>
-          <h3 className="text-lg font-bold text-white uppercase tracking-tight line-clamp-1">{decision.query}</h3>
+          <h3 className="text-lg font-bold text-white uppercase tracking-tight line-clamp-1">{decision.query || "Untitled Strategic Intent"}</h3>
         </div>
         <button className="p-2 text-zinc-700 hover:text-white transition-colors">
           <MoreVertical className="w-4 h-4" />
@@ -51,7 +51,7 @@ export const DecisionCard = ({ decision, onClick }: DecisionCardProps) => {
         <div className="p-4 bg-white/2 border border-white/5 rounded-lg space-y-1">
           <span className="text-[9px] uppercase font-black text-zinc-500 tracking-widest">Viability</span>
           <div className="flex items-end gap-2">
-            <span className="text-2xl font-black text-white">{decision.viability_score.toFixed(0)}%</span>
+            <span className="text-2xl font-black text-white">{(decision.viability_score || 0).toFixed(0)}%</span>
             <div className={`flex items-center gap-1 text-[10px] font-bold mb-1 ${decision.score_trend >= 0 ? 'text-accent' : 'text-red-500'}`}>
               {decision.score_trend >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
               {Math.abs(decision.score_trend)}
@@ -83,10 +83,10 @@ export const DecisionCard = ({ decision, onClick }: DecisionCardProps) => {
 
       <div className="flex items-center gap-4 pt-2 border-t border-white/5">
         <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-zinc-500">
-          <MapPin className="w-3 h-3" /> {decision.constraints.location_tier}
+          <MapPin className="w-3 h-3" /> {decision.constraints?.location_tier || "Global"}
         </div>
         <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-zinc-500">
-          <Banknote className="w-3 h-3" /> {decision.constraints.budget_inr}
+          <Banknote className="w-3 h-3" /> {decision.constraints?.budget_inr || "Flexible"}
         </div>
       </div>
     </motion.div>

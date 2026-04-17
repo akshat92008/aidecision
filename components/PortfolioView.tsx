@@ -27,7 +27,7 @@ export const PortfolioView = ({ decisions, onCreateNew, onSelectDecision }: Port
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [filter, setFilter] = useState('all');
 
-  const filteredDecisions = decisions.filter(d => 
+  const filteredDecisions = (decisions || []).filter(d => 
     filter === 'all' ? true : d.status === filter
   );
 
@@ -71,10 +71,10 @@ export const PortfolioView = ({ decisions, onCreateNew, onSelectDecision }: Port
       {/* METRICS STRIP */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Total Audits', value: decisions.length, icon: Brain },
-          { label: 'Active Missions', value: decisions.filter(d => d.status === 'active').length, icon: Activity },
-          { label: 'Avg Viability', value: `${(decisions.reduce((acc, d) => acc + d.viability_score, 0) / (decisions.length || 1)).toFixed(0)}%`, icon: TrendingUp },
-          { label: 'Pivots Logged', value: decisions.filter(d => d.status === 'pivot').length, icon: History },
+          { label: 'Total Audits', value: (decisions || []).length, icon: Brain },
+          { label: 'Active Missions', value: (decisions || []).filter(d => d.status === 'active').length, icon: Activity },
+          { label: 'Avg Viability', value: `${((decisions || []).reduce((acc, d) => acc + (d.viability_score || 0), 0) / ((decisions || []).length || 1)).toFixed(0)}%`, icon: TrendingUp },
+          { label: 'Pivots Logged', value: (decisions || []).filter(d => d.status === 'pivot').length, icon: History },
         ].map((m, i) => (
           <div key={i} className="p-6 border border-white/5 bg-[#0a0a0a] rounded-xl flex items-center justify-between group hover:border-accent/20 transition-all">
             <div className="space-y-1">

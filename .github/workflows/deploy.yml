@@ -2,38 +2,43 @@ name: Deploy to Cloud Run
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+
+env:
+  PROJECT_ID: ai-decision-machine
+  REGION: us-central1
+  SERVICE_NAME: ai-decision-engine
 
 jobs:
   deploy:
-    name: Build and Deploy to Cloud Run
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Google Auth
-      id: auth
-      uses: 'google-github-actions/auth@v2'
-      with:
-        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-    - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v2'
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-    - name: 'Build and Deploy'
-      run: |
-        # Build the container using Cloud Build
-        gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-decision-engine:${{ github.sha }}
-        
-        # Deploy to Cloud Run
-        gcloud run deploy ai-decision-engine \
-          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-decision-engine:${{ github.sha }} \
-          --platform managed \
-          --region us-central1 \
-          --allow-unauthenticated \
-          --min-instances 0 \
-          --memory 2Gi \
-          --cpu 2 \
-          --set-env-vars="GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},GCP_LOCATION=us-central1,GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}"
+      - name: Build and Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --source . \
+            --project ${{ env.PROJECT_ID }} \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --min-instances 1 \
+            --cpu-boost \
+            --set-env-vars="RUNWAY_GUARDIAN_URL=https://nexus-runway-guardian-967036044210.us-central1.run.app" \
+            --set-env-vars="GCP_PROJECT_ID=ai-decision-machine" \
+            --set-env-vars="GCP_LOCATION=us-central1" \
+            --set-env-vars="GROQ_API_KEY=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" \
+            --set-env-vars="NEXT_PUBLIC_SUPABASE_URL=https://ecvstrjfrjypiyiccwmi.supabase.co" \
+            --set-env-vars="NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjdnN0cmpmcmp5cGl5aWNjd21pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MDQyMjMsImV4cCI6MjA5MTk4MDIyM30.HYvcFPEyW7mNsTtJFg_ISmPIcaqrlW5sURpgTYR_PJc" \
+            --set-env-vars="SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjdnN0cmpmcmp5cGl5aWNjd21pIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjQwNDIyMywiZXhwIjoyMDkxOTgwMjIzfQ.bb1pXXZ0-WetB7ApCqNXyxpLoSUo3QXoOhO7eJ3JU30"
