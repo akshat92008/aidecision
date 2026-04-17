@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect, useRef } from "react";
+import { SimulationLab } from "@/components/SimulationLab";
 import { 
   Plus,
   Brain,
@@ -27,7 +28,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [phase, setPhase] = useState<'IDLE' | 'PORTFOLIO' | 'INTAKE' | 'PROCESSING' | 'REPORT'>('IDLE');
+  const [phase, setPhase] = useState<'IDLE' | 'PORTFOLIO' | 'INTAKE' | 'PROCESSING' | 'REPORT' | 'SIMULATION'>('IDLE');
   const [query, setQuery] = useState("");
   const [constraints, setConstraints] = useState<Constraints | null>(null);
   const [thoughts, setThoughts] = useState<AgentThought[]>([]);
@@ -153,10 +154,21 @@ export default function Home() {
             <div onClick={() => setPhase('INTAKE')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'INTAKE' ? 'text-accent opacity-100' : ''}`}>
                <Plus className="w-6 h-6" />
             </div>
-            <Layout className="w-5 h-5" />
-            <Database className="w-5 h-5" />
-            <ShieldCheck className="w-5 h-5" />
-            <History className="w-5 h-5" />
+            <div onClick={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
+               <Layout className="w-5 h-5" />
+            </div>
+            <div onClick={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
+               <Database className="w-5 h-5" />
+            </div>
+            <div onClick={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} className="cursor-pointer hover:text-accent transition-colors">
+               <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div onClick={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'PORTFOLIO' ? 'text-accent opacity-100' : ''}`}>
+               <History className="w-5 h-5" />
+            </div>
+            <div onClick={() => setPhase('SIMULATION')} className={`cursor-pointer hover:text-accent transition-colors ${phase === 'SIMULATION' ? 'text-accent opacity-100' : ''}`}>
+               <Activity className="w-5 h-5" />
+            </div>
          </nav>
          <div className="flex-1" />
          {user ? (
@@ -268,6 +280,12 @@ export default function Home() {
                   {phase === 'REPORT' && report && (
                     <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full">
                        <ReportView report={report} query={query} onReset={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} />
+                    </motion.div>
+                  )}
+
+                  {phase === 'SIMULATION' && (
+                    <motion.div key="simulation" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+                       <SimulationLab onBack={() => setPhase(user ? 'PORTFOLIO' : 'IDLE')} />
                     </motion.div>
                   )}
                </AnimatePresence>
