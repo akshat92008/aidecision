@@ -11,7 +11,7 @@ import {
   RefinedProblem
 } from '../shared/schemas';
 
-async function callAgent(
+export async function callAgent(
   agentName: string, 
   prompt: string, 
   modelType: 'pro' | 'flash' = 'flash',
