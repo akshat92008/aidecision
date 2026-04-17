@@ -1,5 +1,5 @@
-# Stage 1: Base image
-FROM node:20-slim AS base
+# Stage 1: Base image (Full Node for robust building)
+FROM node:20 AS base
 ENV NEXT_TELEMETRY_DISABLED 1
 
 # Stage 2: Dependencies
@@ -23,8 +23,8 @@ ENV NODE_ENV production
 
 RUN npm run build
 
-# Stage 4: Runner
-FROM base AS runner
+# Stage 4: Runner (Slim image for minimal production size)
+FROM node:20-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
