@@ -1,106 +1,286 @@
 import { getVertexModel } from './vertex-client';
-import { FinalReport, FinalReportSchema } from '../shared/schemas';
+import { callGroqChat } from './groq-client';
+import { 
+  FinalReport, 
+  FinalReportSchema, 
+  IndustryKillerDetection, 
+  Constraints, 
+  Consultation, 
+  IndustryKiller, 
+  AgentThought,
+  RefinedProblem
+} from '../shared/schemas';
 
-/**
- * 6-AGENT SEQUENTIAL HYBRID ORCHESTRATOR
- * Utilizes Gemini 1.5 Pro/Flash on Vertex AI ($300 GCP Credits)
- */
-
-async function callAgent(agentName: string, prompt: string, modelType: 'pro' | 'flash' = 'flash') {
+async function callAgent(
+  agentName: string, 
+  prompt: string, 
+  modelType: 'pro' | 'flash' = 'flash',
+  responseSchema?: any
+): Promise<{data: any, thought: string}> {
   console.log(`[Agent: ${agentName}] Analyzing...`);
+  
+  // PRIMARY: Vertex AI
   try {
-    const model = getVertexModel(modelType === 'pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash');
+    const model = getVertexModel(
+      modelType === 'pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash',
+      responseSchema
+    );
+    
+    const fullPrompt = `${prompt}\n\nIMPORTANT: Return ONLY a valid JSON object. Include your internal reasoning in a 'reasoning' field.`;
+    
     const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
     });
+    
     const text = result.response.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    return JSON.parse(text);
-  } catch (error: any) {
-    console.warn(`[Agent: ${agentName}] Warning:`, error.message);
-    throw error;
+    const data = JSON.parse(text);
+    const thought = data.reasoning || "Reasoning sequence complete.";
+    
+    return { data, thought };
+    
+  } catch (vertexError: any) {
+    console.warn(`[Agent: ${agentName}] Vertex AI failure: ${vertexError.message}. Initiating Groq failover...`);
+    
+    // SECONDARY: Groq Fallback
+    try {
+      const groqPrompt = `${prompt}\n\nSchema requirement: ${JSON.stringify(responseSchema || "Valid JSON")}. Return ONLY JSON.`;
+      const groqResponse = await callGroqChat(groqPrompt);
+      const data = JSON.parse(groqResponse);
+      const thought = data.reasoning || "Groq analysis sequence active.";
+      
+      return { data, thought };
+    } catch (groqError: any) {
+      console.error(`[Agent: ${agentName}] Critical: Both Primary and Fallback AI providers failed.`);
+      throw new Error(`Intelligence Layer Error: ${vertexError.message} (Fallback: ${groqError.message})`);
+    }
   }
 }
 
-export async function generateDecisionReport(query: string, constraints?: any): Promise<FinalReport> {
-  // 1. CLARIFIER AGENT - Expansion & Context
-  const clarifierData = await callAgent('Clarifier', `
-    Input Idea: "${query}"
-    Context: ${JSON.stringify(constraints || {})}
-    Expand this query into a professional business context. Identify core assumptions and industry category.
-    Return schema: { industry_category: string, summary: string, assumptions: string[] }
-  `);
-
-  // 2. RESEARCH AGENT - Market Reality
-  const researchData = await callAgent('Research', `
-    Business Context: ${clarifierData.summary}
-    Analyze specific market demand, current industry trends, and the competitive landscape.
-    Return schema: { market_trends: string[], competitor_landscape: string }
-  `);
-
-  // 3. ANALYSIS AGENT - Weighted Scoring
-  const analysisData = await callAgent('Analysis', `
-    Idea: ${query}
-    Research: ${JSON.stringify(researchData)}
-    Assumptions: ${JSON.stringify(clarifierData.assumptions)}
-    Calculate weighted scores (0-30 for demand, 0-20 for competition, 0-25 for execution, 0-25 for monetization).
-    Return schema: { score_breakdown: { demand: number, competition: number, execution: number, monetization: number } }
-  `, 'flash'); // Cost saving: Use Flash for math/metrics
-
-  const totalScore = analysisData.score_breakdown.demand + 
-                   analysisData.score_breakdown.competition + 
-                   analysisData.score_breakdown.execution + 
-                   analysisData.score_breakdown.monetization;
-
-  // 4. STRATEGY AGENT - The Roadmap
-  const strategyData = await callAgent('Strategy', `
-    Summary: ${clarifierData.summary}
-    Scores: ${JSON.stringify(analysisData.score_breakdown)} (Total: ${totalScore}/100)
-    Provide an actionable execution roadmap, 1 major validation test, and alternative pivots.
-    Return schema: { action_plan: string[], validation_step: string, alternatives: string[] }
-  `);
-
-  // 5. CRITIC AGENT (Reasoning Pro) - The HARSH TRUTH
-  const criticData = await callAgent('Critic', `
-    Full Business Plan: ${JSON.stringify({ clarifierData, researchData, analysisData, strategyData })}
-    You are the "Brutal Reality" Analyst. Identify the top 3 REAL specific reasons this idea will fail. 
-    Be punchy, negative-insight focused, and specific (e.g., "CAC will exceed $100 for a $20 product").
-    Also provide a Success Probability (0-100) and a final Verdict.
-    Verdict Mapping: Score > 70 -> Worth Testing; 50-70 -> Moderate Risk; < 50 -> Strong Risk.
-    Return schema: { 
-      harsh_truth: { 
-        failure_reasons: [{reason:string, severity:'Critical'|'High'|'Medium', explanation:string}], 
-        truth_bomb: string, 
-        downside_risks: string[] 
+export async function getIndustryKillers(query: string): Promise<IndustryKillerDetection> {
+  const schema = {
+    type: 'object',
+    properties: {
+      killers: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            risk: { type: 'string' },
+            impact: { type: 'string' },
+            mitigation_likelihood: { type: 'number' }
+          },
+          required: ['risk', 'impact', 'mitigation_likelihood']
+        },
+        minItems: 3,
+        maxItems: 3
       },
-      success_probability: number,
-      verdict: string
-    }
-  `, 'pro');
-
-  // 6. SYNTHESIS AGENT - Final Research-Grade Construction
-  const finalReportRaw = {
-    summary: clarifierData.summary,
-    industry_category: clarifierData.industry_category,
-    score_total: totalScore,
-    score_breakdown: analysisData.score_breakdown,
-    research: {
-      industry_category: clarifierData.industry_category,
-      market_trends: researchData.market_trends,
-      competitor_landscape: researchData.competitor_landscape
+      analysis_summary: { type: 'string' },
+      reasoning: { type: 'string' }
     },
-    harsh_truth: criticData.harsh_truth,
-    success_probability: criticData.success_probability,
-    verdict: criticData.verdict,
-    action_plan: strategyData.action_plan,
-    validation_step: strategyData.validation_step,
-    alternatives: strategyData.alternatives
+    required: ['killers', 'analysis_summary', 'reasoning']
   };
 
-  const validation = FinalReportSchema.safeParse(finalReportRaw);
-  if (!validation.success) {
-    console.error('Synthesis validation failed:', validation.error.errors);
-    throw new Error('AI Synthesis failed to meet hybrid research-grade specifications.');
-  }
+  const prompt = `
+    Analyze: "${query}"
+    Identify the top 3 REAL industry killers in the Indian Market (2024-2026).
+    Focus on Bharat-specific failure modes (Logistics friction, UPI-dependency risks, etc).
+  `;
+  const { data } = await callAgent('IndustryScanner', prompt, 'flash', schema);
+  return data;
+}
 
-  return validation.data;
+export async function getConsultationQuestions(query: string, currentConstraints?: Constraints): Promise<Consultation> {
+  const killers = await getIndustryKillers(query);
+  const schema = {
+    type: 'object',
+    properties: {
+      questions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            question: { type: 'string' },
+            category: { type: 'string', enum: ["Budget", "Geography", "Time", "Skills", "Scale", "Model"] },
+            impact: { type: 'string' }
+          },
+          required: ['id', 'question', 'category', 'impact']
+        },
+        minItems: 3,
+        maxItems: 5
+      },
+      initial_intent_summary: { type: 'string' },
+      reasoning: { type: 'string' }
+    },
+    required: ['questions', 'initial_intent_summary', 'reasoning']
+  };
+
+  const prompt = `
+    Idea: "${query}"
+    Indian Market Killers: ${JSON.stringify(killers.killers)}
+    Generate assessment questions focusing on Founder-Market Fit for India (Budget in INR, City Tier).
+  `;
+  const { data } = await callAgent('Consultant', prompt, 'flash', schema);
+  return data;
+}
+
+export async function getRefinedProblem(query: string, answers: Record<string, string>): Promise<RefinedProblem> {
+  const schema = {
+    type: 'object',
+    properties: {
+      refined_query: { type: 'string' },
+      context_summary: { type: 'string' },
+      reasoning: { type: 'string' }
+    },
+    required: ['refined_query', 'context_summary', 'reasoning']
+  };
+
+  const prompt = `Original: ${query}. Answers: ${JSON.stringify(answers)}. Refine the problem for the Indian context (Specify Tier 1/2/3).`;
+  const { data } = await callAgent('Refiner', prompt, 'flash', schema);
+  return data;
+}
+
+export async function generateDecisionReport(refinedQuery: string, industryKillers: IndustryKiller[] = []): Promise<FinalReport> {
+  const thoughts: AgentThought[] = [];
+
+  // 1. MARKET ANALYST (India Focus)
+  const analystSchema = {
+    type: 'object',
+    properties: {
+      summary: { type: 'string' },
+      industry_category: { type: 'string' },
+      market_realism: {
+         type: 'object',
+         properties: {
+            tam_sam_som: {
+               type: 'object',
+               properties: {
+                  tam: { type: 'string' },
+                  sam: { type: 'string' },
+                  som: { type: 'string' },
+                  realism_score: { type: 'number' }
+               }
+            },
+            tier_consumer_behavior: { type: 'string' }
+         }
+      },
+      reasoning: { type: 'string' }
+    },
+    required: ['summary', 'industry_category', 'market_realism']
+  };
+  const { data: analystData, thought: t1 } = await callAgent('MarketAnalyst', `Problem: "${refinedQuery}". Research MCA records, Startup India data, and Tier-specific trends.`, 'flash', analystSchema);
+  thoughts.push({ agent: 'MarketAnalyst', thought: t1, timestamp: new Date().toISOString() });
+
+  // 2. RISK/LEGAL (DPDP & GST)
+  const legalSchema = {
+    type: 'object',
+    properties: {
+       regulatory_audit: {
+          type: 'object',
+          properties: {
+             dpdp_compliance: {
+                type: 'object',
+                properties: {
+                   risk_level: { type: 'string', enum: ["Low", "Medium", "High"] },
+                   critical_actions: { type: 'array', items: { type: 'string' } }
+                }
+             },
+             gst_implications: { type: 'string' },
+             labor_laws: { type: 'string' }
+          }
+       },
+       reasoning: { type: 'string' }
+    },
+    required: ['regulatory_audit']
+  };
+  const { data: legalData, thought: t2 } = await callAgent('RiskAgent', `Audit for DPDP 2023, GST, and specific Labor Laws in India for: ${analystData.summary}`, 'flash', legalSchema);
+  thoughts.push({ agent: 'RiskAgent', thought: t2, timestamp: new Date().toISOString() });
+
+  // 3. SYSTEMS THINKER (Consumer Patterns)
+  const systemsSchema = {
+    type: 'object',
+    properties: {
+       tier_insights: { type: 'string' },
+       demand_score: { type: 'number' },
+       execution_difficulty: { type: 'number' },
+       reasoning: { type: 'string' }
+    },
+    required: ['tier_insights', 'demand_score', 'execution_difficulty']
+  };
+  const { data: systemsData, thought: t3 } = await callAgent('SystemsThinker', `Analyze Tier-2 consumer behavior (WhatsApp/Reels dependency) and GTM feasibility for: ${analystData.summary}`, 'flash', systemsSchema);
+  thoughts.push({ agent: 'SystemsThinker', thought: t3, timestamp: new Date().toISOString() });
+
+  // 4. STRATEGIST (90-Day Roadmap)
+  const strategySchema = {
+    type: 'object',
+    properties: {
+      ninety_day_roadmap: { type: 'array', items: { type: 'string' } },
+      competitor_matrix: {
+         type: 'array',
+         items: {
+            type: 'object',
+            properties: {
+               name: { type: 'string' },
+               advantage: { type: 'string' },
+               threat_level: { type: 'string', enum: ["Low", "Medium", "High"] }
+            }
+         }
+      },
+      financial_simulations: { type: 'string' },
+      reasoning: { type: 'string' }
+    },
+    required: ['ninety_day_roadmap', 'competitor_matrix', 'financial_simulations']
+  };
+  const { data: strategyData, thought: t4 } = await callAgent('Strategist', `Generate 90-day India GTM roadmap and competitor matrix for ${analystData.summary}`, 'flash', strategySchema);
+  thoughts.push({ agent: 'Strategist', thought: t4, timestamp: new Date().toISOString() });
+
+  // 5. CRITIC (Harsh Truth)
+  const criticSchema = {
+    type: 'object',
+    properties: {
+       truth_bomb: { type: 'string' },
+       insufficient_data_signals: { type: 'array', items: { type: 'string' } },
+       reasoning: { type: 'string' }
+    },
+    required: ['truth_bomb']
+  };
+  const { data: criticData, thought: t5 } = await callAgent('Critic', `Brutal India-specific reality check for ${analystData.summary}. If signals are weak, return DATA INSUFFICIENT - ASSUMPTION RISK HIGH.`, 'pro', criticSchema);
+  thoughts.push({ agent: 'Critic', thought: t5, timestamp: new Date().toISOString() });
+
+  // REVISED FORMULA: Viability = (Demand*0.3 + Execution*0.4 - RegulatoryRisk*0.3)
+  const demandWeight = 30;
+  const executionWeight = 40;
+  const regulatoryPenaltyMax = 30;
+
+  const demandScore = (systemsData.demand_score / 100) * demandWeight;
+  const executionScore = ((100 - systemsData.execution_difficulty) / 100) * executionWeight;
+  
+  const regRisk = legalData.regulatory_audit.dpdp_compliance.risk_level === 'High' ? 1 : (legalData.regulatory_audit.dpdp_compliance.risk_level === 'Medium' ? 0.5 : 0.1);
+  const regPenalty = regRisk * regulatoryPenaltyMax;
+
+  const viabilityScore = Math.max(0, Math.min(100, demandScore + executionScore - regPenalty));
+
+  const finalReportRaw = {
+    summary: analystData.summary,
+    industry_category: analystData.industry_category,
+    viability_score: viabilityScore,
+    score_breakdown: {
+       demand: Math.round(demandScore),
+       execution: Math.round(executionScore),
+       regulatory_penalty: Math.round(regPenalty)
+    },
+    regulatory_audit: legalData.regulatory_audit,
+    market_realism: analystData.market_realism,
+    harsh_truth: {
+       truth_bomb: criticData.truth_bomb,
+       insufficient_data_signals: criticData.insufficient_data_signals
+    },
+    ninety_day_roadmap: strategyData.ninety_day_roadmap,
+    competitor_matrix: strategyData.competitor_matrix,
+    financial_simulations: strategyData.financial_simulations,
+    agent_thoughts: thoughts,
+    deep_sources: []
+  };
+
+  return FinalReportSchema.parse(finalReportRaw);
 }

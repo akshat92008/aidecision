@@ -1,0 +1,39 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Build and Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Google Auth
+      id: auth
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
+
+    - name: 'Build and Deploy'
+      run: |
+        # Build the container using Cloud Build
+        gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-decision-engine:${{ github.sha }}
+        
+        # Deploy to Cloud Run
+        gcloud run deploy ai-decision-engine \
+          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-decision-engine:${{ github.sha }} \
+          --platform managed \
+          --region us-central1 \
+          --allow-unauthenticated \
+          --min-instances 0 \
+          --memory 2Gi \
+          --cpu 2 \
+          --set-env-vars="GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},GCP_LOCATION=us-central1,GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}"

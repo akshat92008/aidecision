@@ -4,6 +4,7 @@ import { z } from "zod";
 
 const RequestSchema = z.object({
   query: z.string().min(5, "Query is too short"),
+  industryKillers: z.array(z.any()).optional(),
 });
 
 export async function POST(req: Request) {
@@ -19,10 +20,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const { query } = validation.data;
+    const { query, industryKillers } = validation.data;
 
-    // Generate the report using the Groq provider
-    const finalReport = await generateDecisionReport(query);
+    // Generate the report
+    const finalReport = await generateDecisionReport(query, industryKillers);
 
     return NextResponse.json(finalReport);
   } catch (error: any) {

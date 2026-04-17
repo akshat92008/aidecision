@@ -1,64 +1,132 @@
 import { z } from "zod";
 
 /**
- * Capture user constraints (Budget, Time, Skills)
+ * Structured Research Source
  */
-export const ConstraintsSchema = z.object({
-  budget: z.string().optional().describe("e.g. $10,000"),
-  time: z.string().optional().describe("e.g. 6 months"),
-  skills: z.array(z.string()).optional().describe("e.g. Software dev, marketing"),
+export const ResearchSourceSchema = z.object({
+  title: z.string(),
+  url: z.string().url(),
+  snippet: z.string().describe("Key insight from this source"),
+  type: z.enum(["article", "report", "competitor", "social", "academic"]),
 });
 
 /**
- * 4-Pillar Weighted Scoring Matrix
+ * Capture user constraints (India 2026 Spec)
+ */
+export const ConstraintsSchema = z.object({
+  budget_inr: z.string().describe("e.g. ₹50 Lakhs"),
+  location_tier: z.enum(["Tier 1", "Tier 2", "Tier 3"]),
+  founder_background: z.string().describe("Industry experience/Skills"),
+  tech_stack: z.array(z.string()).describe("e.g. Next.js, Flutter, AWS"),
+  time_to_mvp: z.string().describe("e.g. 3 months"),
+});
+
+/**
+ * Regulatory Audit Layer (India 2026)
+ */
+export const RegulatoryAuditSchema = z.object({
+  dpdp_compliance: z.object({
+    risk_level: z.enum(["Low", "Medium", "High"]),
+    critical_actions: z.array(z.string()),
+  }),
+  gst_implications: z.string(),
+  labor_laws: z.string().describe("City/State specific labor regulations"),
+});
+
+/**
+ * 4-Pillar Weighted Scoring Matrix (V2)
  */
 export const ScoreBreakdownSchema = z.object({
   demand: z.number().min(0).max(30).describe("Weight: 30%"),
-  competition: z.number().min(0).max(20).describe("Weight: 20%"),
-  execution: z.number().min(0).max(25).describe("Weight: 25%"),
-  monetization: z.number().min(0).max(25).describe("Weight: 25%"),
+  execution: z.number().min(0).max(40).describe("Weight: 40%"),
+  regulatory_penalty: z.number().min(0).max(30).describe("Max Penalty: 30%"),
 });
 
 /**
- * Historical Market Data & Industry Trends
+ * Indian Market Realism
  */
-export const ResearchDataSchema = z.object({
-  industry_category: z.string(),
-  market_trends: z.array(z.string()),
-  competitor_landscape: z.string(),
+export const MarketRealismSchema = z.object({
+  tam_sam_som: z.object({
+    tam: z.string(),
+    sam: z.string(),
+    som: z.string(),
+    realism_score: z.number(),
+  }),
+  tier_consumer_behavior: z.string().describe("e.g. WhatsApp reliance in Tier 2"),
 });
 
 /**
- * The 'Harsh Truth' / Critic Layer
- */
-export const HarshTruthSchema = z.object({
-  failure_reasons: z.array(z.object({
-    reason: z.string(),
-    severity: z.enum(["Critical", "High", "Medium"]),
-    explanation: z.string(),
-  })).length(3),
-  truth_bomb: z.string().describe("A brutal 1-sentence reality check"),
-  downside_risks: z.array(z.string()),
-});
-
-/**
- * FINAL HYBRID REPORT SCHEMA
- * Combines Research-Grade Analytics with Brutal Reality
+ * FINAL STRATEGIC AUDIT SCHEMA
  */
 export const FinalReportSchema = z.object({
   summary: z.string(),
   industry_category: z.string(),
-  score_total: z.number().min(0).max(100),
+  viability_score: z.number().min(0).max(100),
   score_breakdown: ScoreBreakdownSchema,
-  research: ResearchDataSchema,
-  harsh_truth: HarshTruthSchema,
-  success_probability: z.number().min(0).max(100),
-  verdict: z.enum(["Strong Risk", "Moderate Risk", "Worth Testing"]),
-  action_plan: z.array(z.string()).describe("Detailed steps"),
-  validation_step: z.string().describe("1 major validation test"),
-  alternatives: z.array(z.string()),
+  regulatory_audit: RegulatoryAuditSchema,
+  market_realism: MarketRealismSchema,
+  harsh_truth: z.object({
+     truth_bomb: z.string(),
+     insufficient_data_signals: z.array(z.string()).optional().describe("Flagged if market signal is weak"),
+  }),
+  ninety_day_roadmap: z.array(z.string()),
+  competitor_matrix: z.array(z.object({
+     name: z.string(),
+     advantage: z.string(),
+     threat_level: z.enum(["Low", "Medium", "High"]),
+  })),
+  financial_simulations: z.string(),
+  agent_thoughts: z.array(z.object({
+     agent: z.string(),
+     thought: z.string(),
+     timestamp: z.string(),
+  })),
+  deep_sources: z.array(z.any()),
 });
 
 export type FinalReport = z.infer<typeof FinalReportSchema>;
 export type Constraints = z.infer<typeof ConstraintsSchema>;
 export type ScoreBreakdown = z.infer<typeof ScoreBreakdownSchema>;
+
+/**
+ * CONSULTATION / CIL SCHEMAS
+ */
+
+export const ClarifyingQuestionSchema = z.object({
+  id: z.string(),
+  question: z.string(),
+  category: z.enum(["Budget", "Geography", "Time", "Skills", "Scale", "Model"]),
+  impact: z.string(),
+});
+
+export const ConsultationSchema = z.object({
+  questions: z.array(ClarifyingQuestionSchema).min(3).max(5),
+  initial_intent_summary: z.string(),
+  reasoning: z.string().optional(),
+});
+
+export const RefinedProblemSchema = z.object({
+  refined_query: z.string(),
+  context_summary: z.string(),
+  reasoning: z.string().optional(),
+});
+
+export type ClarifyingQuestion = z.infer<typeof ClarifyingQuestionSchema>;
+export type Consultation = z.infer<typeof ConsultationSchema>;
+export type RefinedProblem = z.infer<typeof RefinedProblemSchema>;
+
+export const IndustryKillerSchema = z.object({
+  risk: z.string(),
+  impact: z.string(),
+  mitigation_likelihood: z.number(),
+});
+
+export const IndustryKillerDetectionSchema = z.object({
+  killers: z.array(IndustryKillerSchema).length(3),
+  analysis_summary: z.string(),
+  reasoning: z.string().optional(),
+});
+
+export type IndustryKillerDetection = z.infer<typeof IndustryKillerDetectionSchema>;
+export type IndustryKiller = z.infer<typeof IndustryKillerSchema>;
+export type AgentThought = { agent: string; thought: string; timestamp: string };

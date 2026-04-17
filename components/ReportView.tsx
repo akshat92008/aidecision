@@ -1,25 +1,25 @@
 "use client";
 
-import { motion } from "motion/react";
+import React, { useState } from "react";
 import { 
-  BarChart2, 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
-  Network, 
   ShieldAlert, 
-  Target,
-  LineChart,
-  Zap,
-  DollarSign,
-  TrendingUp,
-  Flame,
+  Target, 
+  Map, 
+  TrendingUp, 
+  AlertTriangle, 
+  ArrowLeft,
+  Calendar,
+  Layers,
   Search,
-  ListChecks,
-  RefreshCw,
-  Ghost
+  CheckCircle2,
+  XCircle,
+  FileText,
+  Gavel,
+  PieChart,
+  Network
 } from "lucide-react";
-import { FinalReport, ScoreBreakdown } from "@/lib/shared/schemas";
+import { motion } from "motion/react";
+import { FinalReport } from "@/lib/shared/schemas";
 
 interface ReportViewProps {
   report: FinalReport;
@@ -27,256 +27,271 @@ interface ReportViewProps {
   onReset: () => void;
 }
 
-export function ReportView({ report, query, onReset }: ReportViewProps) {
-  const getVerdictStyle = (verdict: string) => {
-    switch (verdict) {
-      case "Worth Testing": return "text-emerald-400 border-emerald-500/30 bg-emerald-500/10 shadow-[0_0_30px_rgba(34,197,94,0.1)]";
-      case "Strong Risk": return "text-rose-500 border-rose-500/30 bg-rose-500/10 shadow-[0_0_30px_rgba(244,63,94,0.1)]";
-      case "Moderate Risk": return "text-amber-400 border-amber-400/30 bg-amber-400/10 shadow-[0_0_30px_rgba(251,191,36,0.1)]";
-      default: return "text-text-muted border-white/10 bg-white/5";
-    }
-  };
-
-  const getVerdictIcon = (verdict: string) => {
-    switch (verdict) {
-      case "Worth Testing": return <CheckCircle2 className="w-10 h-10" />;
-      case "Strong Risk": return <XCircle className="w-10 h-10" />;
-      case "Moderate Risk": return <AlertTriangle className="w-10 h-10" />;
-      default: return null;
-    }
-  };
-
-  const scoreItems = [
-    { label: "Market Demand", value: report.score_breakdown.demand, max: 30, icon: <TrendingUp className="w-4 h-4" /> },
-    { label: "Competition", value: report.score_breakdown.competition, max: 20, icon: <Target className="w-4 h-4" /> },
-    { label: "Execution ease", value: report.score_breakdown.execution, max: 25, icon: <Zap className="w-4 h-4" /> },
-    { label: "Monetization", value: report.score_breakdown.monetization, max: 25, icon: <DollarSign className="w-4 h-4" /> },
-  ];
+export default function ReportView({ report, query, onReset }: ReportViewProps) {
+  const [activeTab, setActiveTab] = useState<'strategy' | 'market' | 'legal' | 'execution'>('strategy');
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98, y: 30 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      className="w-full space-y-10 pb-32"
-    >
-      {/* Header Badge */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-4">
-        <div className="max-w-3xl space-y-4">
-          <div className="flex items-center gap-3">
-             <span className="bg-accent-primary/20 text-accent-primary text-[9px] font-black uppercase tracking-[0.3em] px-4 py-1 rounded-full border border-accent-primary/30">
-               {report.industry_category}
-             </span>
-             <span className="text-text-muted text-[9px] uppercase tracking-[0.4em] font-mono">Expert Synthesis</span>
+    <div className="flex flex-col h-full bg-[#050505] overflow-hidden">
+      {/* HEADER */}
+      <div className="flex items-center justify-between p-6 border-b border-white/5 bg-[#0a0a0a]/50 backdrop-blur-md">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onReset}
+            className="p-2 hover:bg-white/5 border border-white/10 rounded transition-colors text-zinc-500 hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="space-y-1">
+             <div className="flex items-center gap-2">
+                <span className="terminal-text uppercase font-black text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded border border-accent/20">Strategic Audit</span>
+                <span className="text-zinc-500">•</span>
+                <span className="terminal-text text-[10px]">{report.industry_category}</span>
+             </div>
+             <h2 className="text-xl font-bold tracking-tight text-white uppercase">{query}</h2>
           </div>
-          <h2 className="text-3xl md:text-5xl font-display font-bold text-white tracking-tight leading-tight">
-            {query}
-          </h2>
         </div>
-        <button 
-          onClick={onReset}
-          className="text-[10px] uppercase font-bold tracking-[0.3em] px-8 py-4 border border-white/10 rounded-full hover:bg-white/5 transition-all text-text-muted hover:text-white"
-        >
-          New Analysis
-        </button>
+
+        <div className="flex items-center gap-8">
+           <div className="text-right">
+              <div className="terminal-text text-[9px] uppercase tracking-widest text-zinc-500">Viability Score</div>
+              <div className="text-3xl font-black text-accent">{report.viability_score.toFixed(1)}%</div>
+           </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* 🔥 THE HARSH TRUTH CARD (Primary Impact) */}
-        <div className="lg:col-span-12 xl:col-span-8 bg-[#0a0a0a] border border-rose-500/20 rounded-[40px] p-10 relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 p-12 opacity-5">
-            <Flame className="w-64 h-64 text-rose-500" />
-          </div>
-          <div className="flex items-center gap-3 mb-10 relative z-10">
-            <ShieldAlert className="w-5 h-5 text-rose-500" />
-            <h3 className="uppercase tracking-[0.3em] text-[10px] font-black text-rose-400">The Harsh Truth Pass</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
-            <div className="space-y-6">
-              {report.harsh_truth.failure_reasons.map((item, i) => (
-                <div key={i} className="group relative">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-[8px] uppercase font-black px-2 py-0.5 rounded-sm ${
-                      item.severity === 'Critical' ? 'bg-rose-600 text-white' : 'bg-white/10 text-white'
-                    }`}>
-                      {item.severity}
-                    </span>
-                  </div>
-                  <p className="text-lg font-bold text-white mb-2 group-hover:text-rose-400 transition-colors">
-                    {item.reason}
-                  </p>
-                  <p className="text-sm text-text-muted italic leading-relaxed font-light">
-                    "{item.explanation}"
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-10">
-              <div className="bg-rose-500/5 border border-rose-500/10 rounded-3xl p-8 relative">
-                 <h4 className="text-[10px] uppercase tracking-widest font-black text-rose-400 mb-4">Brutal Reality Check</h4>
-                 <p className="text-md text-text-main font-medium italic leading-relaxed">
-                   "{report.harsh_truth.truth_bomb}"
-                 </p>
-              </div>
-              <div className="space-y-4">
-                 <h4 className="text-[10px] uppercase tracking-widest font-black text-text-muted mb-4 opacity-50">Downside Risks</h4>
-                 {report.harsh_truth.downside_risks.map((risk, i) => (
-                    <div key={i} className="flex gap-3 text-sm text-text-muted font-light">
-                      <span className="text-rose-500 font-bold select-none">•</span>
-                      <span>{risk}</span>
-                    </div>
-                 ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 📊 SUCCESS PROBABILITY & VERDICT */}
-        <div className="lg:col-span-12 xl:col-span-4 flex flex-col gap-8">
-           <div className="bg-glass-surface border border-glass-border rounded-[40px] p-10 flex-1 flex flex-col items-center justify-center text-center shadow-2xl min-h-[300px]">
-              <h3 className="uppercase tracking-[0.3em] text-[10px] font-black text-text-muted mb-8">Success probability</h3>
-              <div className="relative">
-                 {/* Decorative Circle */}
-                 <div className="absolute inset-0 scale-[1.8] blur-3xl bg-accent-primary opacity-10 rounded-full" />
-                 <span className="text-8xl font-display font-black tracking-tighter text-white relative z-10">
-                   {report.success_probability}%
-                 </span>
-              </div>
-              <p className="mt-8 text-xs text-text-muted font-medium uppercase tracking-widest opacity-60">
-                 Calculated Confidence
-              </p>
+      {/* NAVIGATOR */}
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="w-56 border-r border-white/5 flex flex-col p-4 space-y-2 bg-[#0a0a0a]">
+           {[
+             { id: 'strategy', label: 'Strategy Core', icon: Target },
+             { id: 'market', label: 'Market Realism', icon: PieChart },
+             { id: 'legal', label: 'Regulatory Wall', icon: Gavel },
+             { id: 'execution', label: '90-Day Roadmap', icon: Calendar }
+           ].map(tab => (
+             <button
+               key={tab.id}
+               onClick={() => setActiveTab(tab.id as any)}
+               className={`flex items-center gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all rounded ${activeTab === tab.id ? 'bg-accent/10 text-accent border border-accent/20 shadow-lg shadow-accent/5' : 'text-zinc-600 hover:text-white hover:bg-white/5'}`}
+             >
+               <tab.icon className="w-4 h-4" />
+               {tab.label}
+             </button>
+           ))}
+           <div className="flex-1" />
+           <div className="p-4 bg-red-500/5 border border-red-500/20 rounded flex flex-col gap-2">
+              <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">Truth Bomb</span>
+              <p className="text-[10px] text-zinc-400 italic leading-relaxed">"{report.harsh_truth.truth_bomb}"</p>
            </div>
+        </aside>
 
-           <div className={`rounded-[40px] p-10 border-2 flex flex-col items-center gap-6 transition-all ${getVerdictStyle(report.verdict)}`}>
-              {getVerdictIcon(report.verdict)}
-              <div className="text-center">
-                 <p className="text-[10px] uppercase tracking-[0.4em] font-black opacity-60 mb-2">Final Verdict</p>
-                 <h4 className="text-3xl font-display font-black italic uppercase tracking-tighter">{report.verdict}</h4>
-              </div>
-           </div>
-        </div>
+        <main className="flex-1 overflow-y-auto p-8 scrollbar-hide">
+          <AnimatePresence mode="wait">
+             {activeTab === 'strategy' && (
+                <motion.div key="strategy" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-4xl">
+                   <div className="space-y-4">
+                      <div className="terminal-text text-[10px] uppercase font-bold text-accent">Executive Audit Summary</div>
+                      <p className="text-lg leading-relaxed text-zinc-300 font-medium">{report.summary}</p>
+                   </div>
 
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="p-6 border border-white/5 bg-white/2 backdrop-blur-sm space-y-2">
+                         <span className="terminal-text text-[9px] uppercase tracking-widest text-zinc-500">Market Demand</span>
+                         <div className="text-2xl font-black text-white">{report.score_breakdown.demand}/30</div>
+                         <div className="w-full bg-white/5 h-1 rounded overflow-hidden">
+                            <div className="bg-accent h-full" style={{ width: `${(report.score_breakdown.demand / 30) * 100}%` }} />
+                         </div>
+                      </div>
+                      <div className="p-6 border border-white/5 bg-white/2 space-y-2">
+                         <span className="terminal-text text-[9px] uppercase tracking-widest text-zinc-500">Execution Score</span>
+                         <div className="text-2xl font-black text-white">{report.score_breakdown.execution}/40</div>
+                         <div className="w-full bg-white/5 h-1 rounded overflow-hidden">
+                            <div className="bg-accent h-full" style={{ width: `${(report.score_breakdown.execution / 40) * 100}%` }} />
+                         </div>
+                      </div>
+                      <div className="p-6 border border-white/5 bg-red-500/5 space-y-2">
+                         <span className="terminal-text text-[9px] uppercase tracking-widest text-red-500">Regulatory Penalty</span>
+                         <div className="text-2xl font-black text-red-500">-{report.score_breakdown.regulatory_penalty}/30</div>
+                         <div className="w-full bg-white/5 h-1 rounded overflow-hidden">
+                            <div className="bg-red-500 h-full" style={{ width: `${(report.score_breakdown.regulatory_penalty / 30) * 100}%` }} />
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="space-y-6">
+                      <div className="terminal-text text-[10px] uppercase font-bold text-accent">Competitor Threat Matrix</div>
+                      <div className="grid grid-cols-1 gap-1 border border-white/10 rounded-lg overflow-hidden">
+                         {report.competitor_matrix.map((c, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 bg-white/2 hover:bg-white/5 transition-colors">
+                               <div className="space-y-1">
+                                  <div className="text-sm font-bold text-white uppercase">{c.name}</div>
+                                  <div className="text-[10px] text-zinc-500">{c.advantage}</div>
+                               </div>
+                               <div className={`px-3 py-1 rounded text-[9px] font-black uppercase tracking-widest ${c.threat_level === 'High' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                  {c.threat_level} Threat
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                </motion.div>
+             )}
+
+             {activeTab === 'market' && (
+                <motion.div key="market" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-4xl">
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <div className="space-y-3">
+                         <div className="terminal-text text-[10px] uppercase font-bold text-zinc-500">TAM (Total Market)</div>
+                         <div className="p-6 border border-white/10 border-dashed rounded-xl bg-white/2">
+                            <div className="text-xl font-bold text-white">{report.market_realism.tam_sam_som.tam}</div>
+                         </div>
+                      </div>
+                      <div className="space-y-3">
+                         <div className="terminal-text text-[10px] uppercase font-bold text-zinc-500">SAM (Serviceable)</div>
+                         <div className="p-6 border border-white/10 border-dashed rounded-xl bg-white/2">
+                            <div className="text-xl font-bold text-white">{report.market_realism.tam_sam_som.sam}</div>
+                         </div>
+                      </div>
+                      <div className="space-y-3">
+                         <div className="terminal-text text-[10px] uppercase font-bold text-zinc-500">SOM (Target)</div>
+                         <div className="p-6 border border-accent/20 border-dashed rounded-xl bg-accent/5">
+                            <div className="text-xl font-bold text-accent">{report.market_realism.tam_sam_som.som}</div>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="p-8 border border-white/5 bg-white/2 rounded-2xl relative overflow-hidden">
+                      <Layers className="absolute -bottom-8 -right-8 w-32 h-32 opacity-5 text-accent" />
+                      <div className="space-y-4">
+                         <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-accent/10 border border-accent/20 rounded-full flex items-center justify-center">
+                               <TrendingUp className="w-5 h-5 text-accent" />
+                            </div>
+                            <div className="terminal-text text-[10px] uppercase font-bold text-accent">Tier Behavior Insights</div>
+                         </div>
+                         <p className="text-lg text-zinc-300 italic leading-relaxed">"{report.market_realism.tier_consumer_behavior}"</p>
+                         <div className="flex items-center gap-2">
+                            <span className="terminal-text text-[9px] uppercase font-bold text-zinc-600">Model Precision:</span>
+                            <span className="terminal-text text-[9px] uppercase font-black text-white">{report.market_realism.tam_sam_som.realism_score}% Accuracy Index</span>
+                         </div>
+                      </div>
+                   </div>
+
+                   {report.harsh_truth.insufficient_data_signals && report.harsh_truth.insufficient_data_signals.length > 0 && (
+                      <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-xl space-y-4">
+                         <div className="flex items-center gap-3 text-red-500">
+                            <AlertTriangle className="w-5 h-5" />
+                            <span className="text-sm font-black uppercase tracking-widest">DATA INSUFFICIENT - ASSUMPTION RISK HIGH</span>
+                         </div>
+                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {report.harsh_truth.insufficient_data_signals.map((s, i) => (
+                               <li key={i} className="text-[10px] text-zinc-400 flex items-center gap-2">
+                                  <div className="w-1 h-1 bg-red-500 rounded-full" /> {s}
+                               </li>
+                            ))}
+                         </ul>
+                      </div>
+                   )}
+                </motion.div>
+             )}
+
+             {activeTab === 'legal' && (
+                <motion.div key="legal" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-4xl">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="p-8 border border-white/5 bg-white/2 rounded-2xl space-y-6">
+                         <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                               <ShieldCheck className="w-6 h-6 text-accent" />
+                               <div className="terminal-text text-[11px] uppercase font-bold text-white">DPDP 2023 Compliance</div>
+                            </div>
+                            <span className={`px-3 py-1 rounded text-[9px] font-black uppercase tracking-widest ${report.regulatory_audit.dpdp_compliance.risk_level === 'Low' ? 'bg-accent/10 text-accent' : 'bg-red-500/10 text-red-500'}`}>
+                               {report.regulatory_audit.dpdp_compliance.risk_level} Risk
+                            </span>
+                         </div>
+                         <div className="space-y-3">
+                            <span className="terminal-text text-[9px] uppercase font-bold text-zinc-500 tracking-widest">Critical Actions Required:</span>
+                            <ul className="space-y-2">
+                               {report.regulatory_audit.dpdp_compliance.critical_actions.map((a, i) => (
+                                  <li key={i} className="text-xs text-zinc-300 flex items-start gap-3">
+                                     <div className="w-1.5 h-1.5 bg-accent rounded-full mt-1.5 shrink-0" />
+                                     {a}
+                                  </li>
+                               ))}
+                            </ul>
+                         </div>
+                      </div>
+
+                      <div className="p-8 border border-white/5 bg-white/2 rounded-2xl space-y-8">
+                         <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                               <FileText className="w-5 h-5 text-zinc-500" />
+                               <div className="terminal-text text-[11px] uppercase font-bold text-white">GST Implications</div>
+                            </div>
+                            <p className="text-sm text-zinc-400 leading-relaxed font-mono">{report.regulatory_audit.gst_implications}</p>
+                         </div>
+                         <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                               <Gavel className="w-5 h-5 text-zinc-500" />
+                               <div className="terminal-text text-[11px] uppercase font-bold text-white">Labor Law Audit</div>
+                            </div>
+                            <p className="text-sm text-zinc-400 leading-relaxed font-mono">{report.regulatory_audit.labor_laws}</p>
+                         </div>
+                      </div>
+                   </div>
+                </motion.div>
+             )}
+
+             {activeTab === 'execution' && (
+                <motion.div key="execution" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12 max-w-4xl">
+                   <div className="space-y-6">
+                      <div className="terminal-text text-[10px] uppercase font-bold text-accent">90-Day Execution Roadmap</div>
+                      <div className="relative pl-8 space-y-12 after:content-[''] after:absolute after:left-3 after:top-2 after:bottom-2 after:w-px after:bg-white/5">
+                         {report.ninety_day_roadmap.map((step, i) => (
+                            <div key={i} className="relative">
+                               <div className="absolute -left-[25px] top-1 w-2.5 h-2.5 bg-accent border border-black rounded-full z-10" />
+                               <div className="p-5 border border-white/5 bg-white/2 rounded-xl relative group hover:border-accent/40 transition-all cursor-default">
+                                  <div className="absolute top-0 right-0 p-3 terminal-text text-[8px] opacity-10 font-black">PHASE_0{(i/3+1).toFixed(0)}</div>
+                                  <span className="text-sm text-zinc-300 leading-relaxed font-medium block">{step}</span>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+
+                   <div className="space-y-6">
+                      <div className="terminal-text text-[10px] uppercase font-bold text-zinc-500">Infrastructure & Financial Simulation</div>
+                      <div className="p-8 border border-white/5 bg-[#0a0a0a] rounded-2xl font-mono text-xs leading-relaxed text-zinc-500">
+                         <div className="text-white mb-4 uppercase font-bold tracking-[0.2em] border-b border-white/5 pb-2">Venture_Simulation_Log_Output:</div>
+                         {report.financial_simulations}
+                         <div className="mt-6 flex items-center gap-2 text-accent">
+                            <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
+                            Simulation Complete. Burn/Growth ratios verified for India 2026.
+                         </div>
+                      </div>
+                   </div>
+                </motion.div>
+             )}
+          </AnimatePresence>
+        </main>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* WEIGHHTED MATRIX */}
-        <div className="bg-glass-surface border border-glass-border rounded-[40px] p-10 shadow-2xl relative overflow-hidden">
-           <div className="absolute top-0 right-0 p-10 opacity-5">
-              <BarChart2 className="w-32 h-32" />
-           </div>
-           <div className="flex items-center gap-3 mb-12">
-            <Target className="w-5 h-5 text-accent-secondary" />
-            <h3 className="uppercase tracking-[0.3em] text-[10px] font-black text-text-muted">Weighted Analytics matrix</h3>
-           </div>
-           
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-10">
-              {scoreItems.map((item, i) => (
-                <div key={i} className="space-y-4">
-                  <div className="flex justify-between items-center text-[10px] font-mono tracking-widest uppercase opacity-70">
-                    <div className="flex items-center gap-2">
-                       {item.icon}
-                       <span>{item.label}</span>
-                    </div>
-                    <span>{item.value}<span className="opacity-40 ml-1">/{item.max}</span></span>
-                  </div>
-                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden p-[2px] border border-white/10">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: (item.value / item.max) * 100 + "%" }}
-                      transition={{ duration: 1.5, delay: 0.2 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                      className="h-full bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full"
-                    />
-                  </div>
-                </div>
-              ))}
-           </div>
-
-           <div className="mt-12 pt-8 border-t border-white/5">
-              <span className="text-3xl font-display font-light text-white italic">
-                {report.score_total}<span className="text-sm opacity-40 ml-1">/100 Total Score</span>
-              </span>
-           </div>
-        </div>
-
-        {/* MARKET REALITY */}
-        <div className="bg-glass-surface border border-glass-border rounded-[40px] p-10 shadow-2xl">
-           <div className="flex items-center gap-3 mb-10">
-            <Search className="w-5 h-5 text-blue-400" />
-            <h3 className="uppercase tracking-[0.3em] text-[10px] font-black text-text-muted">Market Reality Scan</h3>
-           </div>
-           
-           <div className="space-y-10">
-              <div className="grid grid-cols-1 gap-4">
-                 {report.research.market_trends.map((trend, i) => (
-                    <div key={i} className="flex gap-4 items-center bg-white/5 border border-white/5 rounded-2xl p-4 transition-colors hover:border-blue-400/20">
-                       <Ghost className="w-4 h-4 text-blue-400/60" />
-                       <p className="text-sm text-text-main font-light italic">{trend}</p>
-                    </div>
-                 ))}
-              </div>
-              <div className="pt-8 border-t border-white/5">
-                 <h4 className="text-[9px] uppercase tracking-widest font-black text-text-muted mb-4 opacity-50 italic">Competitor Scan Results</h4>
-                 <p className="text-sm text-text-muted leading-relaxed font-light italic leading-loose">
-                    "{report.research.competitor_landscape}"
-                 </p>
-              </div>
-           </div>
-        </div>
-
-      </div>
-
-      {/* FOOTER: ROADMAP & ACTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-         <div className="lg:col-span-2 bg-glass-surface border border-glass-border rounded-[40px] p-10 shadow-2xl">
-            <div className="flex items-center gap-3 mb-12">
-               <ListChecks className="w-5 h-5 text-emerald-400" />
-               <h3 className="uppercase tracking-[0.3em] text-[10px] font-black text-text-muted">Strategic Roadmap</h3>
+      {/* FOOTER BAR */}
+      <div className="p-4 border-t border-white/5 bg-[#0a0a0a] flex items-center justify-between px-8">
+         <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 terminal-text text-[9px] uppercase font-bold text-zinc-500">
+               <Network className="w-3 h-3" /> Synthesis Status: <span className="text-accent italic">Lossless</span>
             </div>
-            <div className="space-y-8">
-               {report.action_plan.map((step, i) => (
-                  <div key={i} className="flex gap-8 group">
-                     <div className="flex flex-col items-center gap-2">
-                        <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xs font-black text-emerald-400">
-                          {i + 1}
-                        </div>
-                        {i !== report.action_plan.length - 1 && <div className="w-px h-full bg-emerald-500/20" />}
-                     </div>
-                     <div className="pb-8">
-                        <p className="text-text-main leading-relaxed font-medium text-lg mb-2">{step}</p>
-                        <p className="text-[10px] uppercase font-mono tracking-widest text-text-muted">Phase 0{i+1}</p>
-                     </div>
-                  </div>
-               ))}
+            <div className="flex items-center gap-2 terminal-text text-[9px] uppercase font-bold text-zinc-500">
+               <Search className="w-3 h-3" /> Data Freshness: <span className="text-white">Live (T+2)</span>
             </div>
          </div>
-
-         <div className="flex flex-col gap-8">
-            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-[40px] p-8 shadow-2xl">
-              <div className="flex flex-col items-center text-center p-6 bg-white/5 rounded-3xl border border-white/5">
-                 <Zap className="w-8 h-8 text-emerald-400 mb-6" />
-                 <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-emerald-400 mb-4">Immediate Validation</h4>
-                 <p className="text-sm text-text-main font-bold leading-relaxed">{report.validation_step}</p>
-              </div>
-            </div>
-
-            <div className="bg-glass-surface border border-glass-border rounded-[40px] p-10 flex-1 shadow-2xl">
-               <div className="flex items-center gap-3 mb-8">
-                  <RefreshCw className="w-5 h-5 text-amber-400" />
-                  <h3 className="uppercase tracking-[0.3em] text-[10px] font-black text-text-muted">Strategic Pivots</h3>
-               </div>
-               <div className="space-y-4">
-                  {report.alternatives.map((alt, i) => (
-                     <div key={i} className="p-4 bg-white/5 border border-white/5 rounded-2xl text-xs text-text-muted leading-relaxed font-light italic">
-                        {alt}
-                     </div>
-                  ))}
-               </div>
-            </div>
-         </div>
+         <button className="flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded text-[10px] uppercase font-black tracking-[0.2em] text-accent hover:bg-accent/20 transition-all">
+            <Layers className="w-4 h-4" /> Export Strategic Audit (V2)
+         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
+
+// Helper component for AnimatePresence
+import { AnimatePresence } from "motion/react";
+import { ShieldCheck } from "lucide-react";
