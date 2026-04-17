@@ -140,147 +140,16 @@ export async function getRefinedProblem(query: string, answers: Record<string, s
   return data;
 }
 
+import { nexusEngine } from './decision-engine';
+
 export async function generateDecisionReport(refinedQuery: string, industryKillers: IndustryKiller[] = []): Promise<FinalReport> {
-  const thoughts: AgentThought[] = [];
-
-  // 1. MARKET ANALYST (India Focus)
-  const analystSchema = {
-    type: 'object',
-    properties: {
-      summary: { type: 'string' },
-      industry_category: { type: 'string' },
-      market_realism: {
-         type: 'object',
-         properties: {
-            tam_sam_som: {
-               type: 'object',
-               properties: {
-                  tam: { type: 'string' },
-                  sam: { type: 'string' },
-                  som: { type: 'string' },
-                  realism_score: { type: 'number' }
-               }
-            },
-            tier_consumer_behavior: { type: 'string' }
-         }
-      },
-      reasoning: { type: 'string' }
-    },
-    required: ['summary', 'industry_category', 'market_realism']
+  // Use the new Phase 1 Nexus Engine for all audits
+  const constraintsData: Constraints = {
+    budget_inr: "Not Specified",
+    location_tier: "Tier 1",
+    founder_background: "Direct Audit Mode",
+    tech_stack: ["General"],
+    time_to_mvp: "3 months"
   };
-  const { data: analystData, thought: t1 } = await callAgent('MarketAnalyst', `Problem: "${refinedQuery}". Research MCA records, Startup India data, and Tier-specific trends.`, 'flash', analystSchema);
-  thoughts.push({ agent: 'MarketAnalyst', thought: t1, timestamp: new Date().toISOString() });
-
-  // 2. RISK/LEGAL (DPDP & GST)
-  const legalSchema = {
-    type: 'object',
-    properties: {
-       regulatory_audit: {
-          type: 'object',
-          properties: {
-             dpdp_compliance: {
-                type: 'object',
-                properties: {
-                   risk_level: { type: 'string', enum: ["Low", "Medium", "High"] },
-                   critical_actions: { type: 'array', items: { type: 'string' } }
-                }
-             },
-             gst_implications: { type: 'string' },
-             labor_laws: { type: 'string' }
-          }
-       },
-       reasoning: { type: 'string' }
-    },
-    required: ['regulatory_audit']
-  };
-  const { data: legalData, thought: t2 } = await callAgent('RiskAgent', `Audit for DPDP 2023, GST, and specific Labor Laws in India for: ${analystData.summary}`, 'flash', legalSchema);
-  thoughts.push({ agent: 'RiskAgent', thought: t2, timestamp: new Date().toISOString() });
-
-  // 3. SYSTEMS THINKER (Consumer Patterns)
-  const systemsSchema = {
-    type: 'object',
-    properties: {
-       tier_insights: { type: 'string' },
-       demand_score: { type: 'number' },
-       execution_difficulty: { type: 'number' },
-       reasoning: { type: 'string' }
-    },
-    required: ['tier_insights', 'demand_score', 'execution_difficulty']
-  };
-  const { data: systemsData, thought: t3 } = await callAgent('SystemsThinker', `Analyze Tier-2 consumer behavior (WhatsApp/Reels dependency) and GTM feasibility for: ${analystData.summary}`, 'flash', systemsSchema);
-  thoughts.push({ agent: 'SystemsThinker', thought: t3, timestamp: new Date().toISOString() });
-
-  // 4. STRATEGIST (90-Day Roadmap)
-  const strategySchema = {
-    type: 'object',
-    properties: {
-      ninety_day_roadmap: { type: 'array', items: { type: 'string' } },
-      competitor_matrix: {
-         type: 'array',
-         items: {
-            type: 'object',
-            properties: {
-               name: { type: 'string' },
-               advantage: { type: 'string' },
-               threat_level: { type: 'string', enum: ["Low", "Medium", "High"] }
-            }
-         }
-      },
-      financial_simulations: { type: 'string' },
-      reasoning: { type: 'string' }
-    },
-    required: ['ninety_day_roadmap', 'competitor_matrix', 'financial_simulations']
-  };
-  const { data: strategyData, thought: t4 } = await callAgent('Strategist', `Generate 90-day India GTM roadmap and competitor matrix for ${analystData.summary}`, 'flash', strategySchema);
-  thoughts.push({ agent: 'Strategist', thought: t4, timestamp: new Date().toISOString() });
-
-  // 5. CRITIC (Harsh Truth)
-  const criticSchema = {
-    type: 'object',
-    properties: {
-       truth_bomb: { type: 'string' },
-       insufficient_data_signals: { type: 'array', items: { type: 'string' } },
-       reasoning: { type: 'string' }
-    },
-    required: ['truth_bomb']
-  };
-  const { data: criticData, thought: t5 } = await callAgent('Critic', `Brutal India-specific reality check for ${analystData.summary}. If signals are weak, return DATA INSUFFICIENT - ASSUMPTION RISK HIGH.`, 'pro', criticSchema);
-  thoughts.push({ agent: 'Critic', thought: t5, timestamp: new Date().toISOString() });
-
-  // REVISED FORMULA: Viability = (Demand*0.3 + Execution*0.4 - RegulatoryRisk*0.3)
-  const demandWeight = 30;
-  const executionWeight = 40;
-  const regulatoryPenaltyMax = 30;
-
-  const demandScore = (systemsData.demand_score / 100) * demandWeight;
-  const executionScore = ((100 - systemsData.execution_difficulty) / 100) * executionWeight;
-  
-  const regRisk = legalData.regulatory_audit.dpdp_compliance.risk_level === 'High' ? 1 : (legalData.regulatory_audit.dpdp_compliance.risk_level === 'Medium' ? 0.5 : 0.1);
-  const regPenalty = regRisk * regulatoryPenaltyMax;
-
-  const viabilityScore = Math.max(0, Math.min(100, demandScore + executionScore - regPenalty));
-
-  const finalReportRaw = {
-    summary: analystData.summary,
-    industry_category: analystData.industry_category,
-    viability_score: viabilityScore,
-    score_breakdown: {
-       demand: Math.round(demandScore),
-       execution: Math.round(executionScore),
-       regulatory_penalty: Math.round(regPenalty)
-    },
-    regulatory_audit: legalData.regulatory_audit,
-    market_realism: analystData.market_realism,
-    harsh_truth: {
-       truth_bomb: criticData.truth_bomb,
-       insufficient_data_signals: criticData.insufficient_data_signals
-    },
-    ninety_day_roadmap: strategyData.ninety_day_roadmap,
-    competitor_matrix: strategyData.competitor_matrix,
-    financial_simulations: strategyData.financial_simulations,
-    agent_thoughts: thoughts,
-    deep_sources: []
-  };
-
-  return FinalReportSchema.parse(finalReportRaw);
+  return nexusEngine.runStrategicAudit(refinedQuery, constraintsData);
 }

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { generateDecisionReport } from "@/lib/server/ai-provider";
+import { createClient } from "@/utils/supabase/server";
 import { z } from "zod";
 
 const RequestSchema = z.object({
   query: z.string().min(5, "Query is too short"),
+  constraints: z.any().optional(),
   industryKillers: z.array(z.any()).optional(),
 });
 
@@ -20,16 +22,42 @@ export async function POST(req: Request) {
       );
     }
 
-    const { query, industryKillers } = validation.data;
+    const { query, constraints, industryKillers } = validation.data;
 
     // Generate the report
     const finalReport = await generateDecisionReport(query, industryKillers);
+
+    // PHASE 2: PERISTENCE
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      // Create initial decision record
+      const { data: decision, error: dError } = await supabase
+        .from('decisions')
+        .insert({
+          user_id: user.id,
+          query: query,
+          constraints: constraints || {},
+          viability_score: finalReport.viability_score,
+          status: 'active',
+          last_report: finalReport,
+          milestones: finalReport.ninety_day_roadmap.map((title: string) => ({
+            id: crypto.randomUUID(),
+            title,
+            status: 'pending'
+          }))
+        })
+        .select()
+        .single();
+
+      if (dError) console.error("[Supabase Error] Decision Insert:", dError);
+    }
 
     return NextResponse.json(finalReport);
   } catch (error: any) {
     console.error("Error in AI decision engine:", error);
     
-    // Better user-facing error messages
     const status = error.message.includes("rate limit") ? 429 : 500;
     const message = error.message.includes("rate limit") 
       ? "AI model is busy (rate limited). Please try again in a moment." 

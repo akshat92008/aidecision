@@ -130,3 +130,33 @@ export const IndustryKillerDetectionSchema = z.object({
 export type IndustryKillerDetection = z.infer<typeof IndustryKillerDetectionSchema>;
 export type IndustryKiller = z.infer<typeof IndustryKillerSchema>;
 export type AgentThought = { agent: string; thought: string; timestamp: string };
+
+/**
+ * STRATEGIC MEMORY & LIFECYCLE (PHASE 2)
+ */
+
+export const MilestoneSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  description: z.string(),
+  status: z.enum(["pending", "in_progress", "completed", "blocked"]),
+  due_date: z.string().optional(),
+  completed_at: z.string().optional(),
+});
+
+export const DecisionSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  query: z.string(),
+  constraints: ConstraintsSchema,
+  status: z.enum(["draft", "active", "pivot", "kill"]),
+  viability_score: z.number(),
+  score_trend: z.number().describe("Delta from previous audit"),
+  created_at: z.string(),
+  updated_at: z.string(),
+  last_report: FinalReportSchema,
+  milestones: z.array(MilestoneSchema),
+});
+
+export type Milestone = z.infer<typeof MilestoneSchema>;
+export type Decision = z.infer<typeof DecisionSchema>;
